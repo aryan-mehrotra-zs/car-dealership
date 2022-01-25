@@ -193,7 +193,6 @@ func TestHandler_GetByID(t *testing.T) {
 		if reflect.DeepEqual(body, tc.resp) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
 		}
-
 	}
 }
 
