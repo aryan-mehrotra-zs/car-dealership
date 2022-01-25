@@ -5,7 +5,6 @@ import "github.com/google/uuid"
 type Engine struct {
 	ID           uuid.UUID `json:"-id"`
 	Displacement int       `json:"displacement"`
-	NCylinder    int       `json:"noOfCylinder"`
-	Range        int       `json:"range"
-`
+	NCylinder    int       `json:"NCylinder"`
+	Range        int       `json:"range"`
 }
