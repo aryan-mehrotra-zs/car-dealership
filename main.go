@@ -32,9 +32,9 @@ func main() {
 	handler := handlers.New(service)
 
 	r := mux.NewRouter()
+	r.HandleFunc("/car", handler.Create).Methods(http.MethodPost)
 	r.HandleFunc("/car", handler.GetAll).Queries("brand", "{brand}", "engine", "{engine}").Methods(http.MethodGet)
 	r.HandleFunc("/car/{id}", handler.GetByID).Methods(http.MethodGet)
-	r.HandleFunc("/car", handler.Create).Methods(http.MethodPost)
 	r.HandleFunc("/car/{id}", handler.Update).Methods(http.MethodPut)
 	r.HandleFunc("/car/{id}", handler.Delete).Methods(http.MethodDelete)
 
