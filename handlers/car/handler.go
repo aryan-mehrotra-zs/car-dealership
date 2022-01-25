@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/amehrotra/car-dealership/errors"
+	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
 	"github.com/amehrotra/car-dealership/services"
 )
@@ -94,7 +95,24 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	setStatusCode(w, err, r.Method, car)
 }
 
+func withEngine(query string) bool {
+	if query == "true" {
+		return true
+	}
+
+	return false
+}
+
 func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	filter := filters.Car{
+		Brand:  query.Get("brand"),
+		Engine: withEngine(query.Get("Engine")),
+	}
+
+	resp, err := h.service.GetAll(filter)
+	setStatusCode(w, err, r.Method, resp)
 
 }
 
