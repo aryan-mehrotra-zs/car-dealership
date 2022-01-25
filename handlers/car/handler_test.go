@@ -12,37 +12,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
-	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/filters"
-	"github.com/amehrotra/car-dealership/models"
 )
 
-type mockService struct{}
+func initializeTest(method string, body io.Reader, pathParams map[string]string) (handler, *http.Request, *httptest.ResponseRecorder) {
+	h := New(mockService{})
 
-func (m mockService) Create(car models.Car) (models.Car, error) {
-	return models.Car{}, nil
-}
+	req := httptest.NewRequest(method, "http://car", body)
+	r := mux.SetURLVars(req, pathParams)
+	w := httptest.NewRecorder()
 
-func (m mockService) GetAll(param filters.Car) ([]models.Car, error) {
-	return nil, nil
-}
-
-func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
-	return models.Car{}, nil
-}
-
-func (m mockService) Update(car models.Car) (models.Car, error) {
-	return models.Car{}, nil
-}
-
-func (m mockService) Delete(id uuid.UUID) error {
-	return nil
-}
-
-type mockReader struct{}
-
-func (m mockReader) Read(p []byte) (n int, err error) {
-	return 0, errors.InvalidParam{}
+	return h, r, w
 }
 
 func TestHandler_Create(t *testing.T) {
@@ -65,11 +45,8 @@ func TestHandler_Create(t *testing.T) {
 		{"database connectivity error", bytes.NewReader(resp), resp, http.StatusInternalServerError},
 	}
 
-	h := New(mockService{})
-
 	for i, tc := range cases {
-		r := httptest.NewRequest(http.MethodPost, "http://localhost:8000/car", tc.body)
-		w := httptest.NewRecorder()
+		h, r, w := initializeTest(http.MethodPost, tc.body, nil)
 
 		h.Create(w, r)
 
@@ -125,12 +102,8 @@ func TestHandler_GetAll(t *testing.T) {
 		{"database connectivity error", filters.Car{Brand: "", Engine: true}, []byte(""), http.StatusInternalServerError},
 	}
 
-	h := New(mockService{})
-
 	for i, tc := range cases {
-		req := httptest.NewRequest(http.MethodPost, "http://localhost:8000/car", http.NoBody)
-		r := mux.SetURLVars(req, map[string]string{"brand": tc.car.Brand, "engine": strconv.FormatBool(tc.car.Engine)})
-		w := httptest.NewRecorder()
+		h, r, w := initializeTest(http.MethodPost, http.NoBody, map[string]string{"brand": tc.car.Brand, "engine": strconv.FormatBool(tc.car.Engine)})
 
 		h.GetAll(w, r)
 
@@ -141,7 +114,10 @@ func TestHandler_GetAll(t *testing.T) {
 			t.Errorf("cannot read response")
 		}
 
-		resp.Body.Close()
+		err = resp.Body.Close()
+		if err != nil {
+			return
+		}
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -169,12 +145,8 @@ func TestHandler_GetByID(t *testing.T) {
 		{"database connectivity error", uuid.UUID{}, []byte(""), http.StatusInternalServerError},
 	}
 
-	h := New(mockService{})
-
 	for i, tc := range cases {
-		req := httptest.NewRequest(http.MethodGet, "http://localhost:8000/car", http.NoBody)
-		r := mux.SetURLVars(req, map[string]string{"id": tc.id.URN()})
-		w := httptest.NewRecorder()
+		h, r, w := initializeTest(http.MethodGet, http.NoBody, map[string]string{"id": tc.id.URN()})
 
 		h.GetByID(w, r)
 
@@ -185,7 +157,10 @@ func TestHandler_GetByID(t *testing.T) {
 			t.Errorf("cannot read response")
 		}
 
-		resp.Body.Close()
+		err = resp.Body.Close()
+		if err != nil {
+			return
+		}
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -214,12 +189,8 @@ func TestHandler_Update(t *testing.T) {
 		{"database connectivity error", uuid.UUID{}, bytes.NewReader([]byte("")), http.StatusInternalServerError},
 	}
 
-	h := New(mockService{})
-
 	for i, tc := range cases {
-		req := httptest.NewRequest(http.MethodPut, "http://localhost:8000/car/{id}", tc.body)
-		r := mux.SetURLVars(req, map[string]string{"id": tc.id.URN()})
-		w := httptest.NewRecorder()
+		h, r, w := initializeTest(http.MethodPut, tc.body, map[string]string{"id": tc.id.URN()})
 
 		h.Update(w, r)
 
@@ -243,12 +214,8 @@ func TestHandler_Delete(t *testing.T) {
 		{"database connectivity error", uuid.UUID{}, http.StatusInternalServerError},
 	}
 
-	h := New(mockService{})
-
 	for i, tc := range cases {
-		req := httptest.NewRequest(http.MethodPut, "http://localhost:8000/car/{id}", http.NoBody)
-		r := mux.SetURLVars(req, map[string]string{"id": tc.id.URN()})
-		w := httptest.NewRecorder()
+		h, r, w := initializeTest(http.MethodPut, http.NoBody, map[string]string{"id": tc.id.URN()})
 
 		h.Delete(w, r)
 
