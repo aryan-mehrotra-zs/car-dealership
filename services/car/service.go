@@ -18,7 +18,7 @@ func New(engine stores.Engine, car stores.Car) service {
 }
 
 func (s service) Create(car models.Car) (models.Car, error) {
-	return models.Car{}, nil
+	return car, nil
 }
 
 func (s service) GetAll(car filters.Car) ([]models.Car, error) {
