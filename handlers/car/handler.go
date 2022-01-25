@@ -10,8 +10,8 @@ type handler struct {
 	service services.Car
 }
 
-func New(car services.Car) handler {
-	return handler{service: car}
+func New(service services.Car) handler {
+	return handler{service: service}
 }
 
 func (h handler) Create(w http.ResponseWriter, r *http.Request) {
