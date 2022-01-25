@@ -3,7 +3,7 @@ package models
 import (
 	"github.com/google/uuid"
 
-	_type "github.com/amehrotra/car-dealership/type"
+	"github.com/amehrotra/car-dealership/types"
 )
 
 type Car struct {
@@ -11,6 +11,6 @@ type Car struct {
 	Model             string     `json:"model"`
 	YearOfManufacture int        `json:"yearOfManufacture"`
 	Brand             string     `json:"brand"`
-	FuelType          _type.Fuel `json:"fuelType"`
+	FuelType          types.Fuel `json:"fuelType"`
 	Engine            Engine     `json:"engine"`
 }
