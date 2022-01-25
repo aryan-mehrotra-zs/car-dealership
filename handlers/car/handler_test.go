@@ -57,7 +57,7 @@ func TestHandler_Create(t *testing.T) {
 		{"missing parameter", bytes.NewReader([]byte(`{"Model":"BMW","YearOfManufacture":2022,"Brand":"BMW"}`)), []byte(""), http.StatusBadRequest},
 		{"invalid parameter", bytes.NewReader([]byte(`{"Model":BMW,"YearOfManufacture":2022,"Brand":"BMW","FuelType":"Petrol",{20,2,0}}`)), []byte(""), http.StatusBadRequest},
 		{"unable to read body", mockReader{}, []byte(""), http.StatusBadRequest},
-		{"database connectivity error", bytes.NewReader(res), res, http.StatusInternalServerError},
+		{"database error", bytes.NewReader(res), res, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
@@ -147,7 +147,7 @@ func TestHandler_GetByID(t *testing.T) {
 		{"request successful", uuid.UUID{}, res, http.StatusOK},
 		{"entity not found", uuid.UUID{}, []byte(""), http.StatusBadRequest},
 		{"invalid id", uuid.Nil, []byte(""), http.StatusBadRequest},
-		{"database connectivity error", uuid.UUID{}, []byte(""), http.StatusInternalServerError},
+		{"database error", uuid.UUID{}, []byte(""), http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
@@ -187,7 +187,7 @@ func TestHandler_Update(t *testing.T) {
 		{"entity does not exist", uuid.Nil, bytes.NewReader([]byte("")), []byte(""), http.StatusNotFound},
 		{"unable to read body", uuid.UUID{}, mockReader{}, []byte(""), http.StatusBadRequest},
 		{"unmarshal error", uuid.UUID{}, bytes.NewReader([]byte("invalid Body")), []byte(""), http.StatusBadRequest},
-		{"database connectivity error", uuid.UUID{}, bytes.NewReader([]byte("")), []byte(""), http.StatusInternalServerError},
+		{"database error", uuid.UUID{}, bytes.NewReader([]byte("")), []byte(""), http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
@@ -221,7 +221,7 @@ func TestHandler_Delete(t *testing.T) {
 		{"delete successful", uuid.UUID{}, http.StatusNoContent},
 		{"entity does not exist", uuid.UUID{}, http.StatusNotFound},
 		{"invalid id", uuid.Nil, http.StatusBadRequest},
-		{"database connectivity error", uuid.UUID{}, http.StatusInternalServerError},
+		{"database error", uuid.UUID{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
