@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/amehrotra/car-dealership/errors"
+	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
 )
 
@@ -21,7 +22,7 @@ func (m mockService) Create(car models.Car) (uuid.UUID, error) {
 	return uuid.UUID{}, nil
 }
 
-func (m mockService) GetAll(brand string, engine bool) (models.Car, error) {
+func (m mockService) GetAll(param filters.Car) (models.Car, error) {
 	return models.Car{}, nil
 }
 
