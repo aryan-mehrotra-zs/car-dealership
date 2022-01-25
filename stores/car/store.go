@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
 )
 
@@ -20,8 +21,8 @@ func (c car) Create(car models.Car) (uuid.UUID, error) {
 	return uuid.UUID{}, nil
 }
 
-func (c car) GetAll(brand string, engine bool) (models.Car, error) {
-	return models.Car{}, nil
+func (c car) GetAll(filter filters.Car) ([]models.Car, error) {
+	return nil, nil
 }
 
 func (c car) GetByID(id uuid.UUID) (models.Car, error) {
