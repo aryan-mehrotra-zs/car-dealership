@@ -7,9 +7,9 @@ import (
 )
 
 type Car interface {
-	Create(car models.Car) (uuid.UUID, error)
-	GetAll(brand string, engine bool) (models.Car, error)
+	Create(car models.Car) (models.Car, error)
+	GetAll(brand string, engine bool) ([]models.Car, error)
 	GetByID(id uuid.UUID) (models.Car, error)
-	Update(car models.Car) error
+	Update(car models.Car) (models.Car, error)
 	Delete(id uuid.UUID) error
 }
