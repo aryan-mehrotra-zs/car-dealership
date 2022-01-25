@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+
 	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
@@ -95,20 +98,28 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	setStatusCode(w, err, r.Method, car)
 }
 
-func withEngine(query string) bool {
-	if query == "true" {
-		return true
-	}
+func getID(r *http.Request) uuid.UUID {
+	param := mux.Vars(r)
+	idParam := param["id"]
 
-	return false
+	// How to handle panics
+	// MustParse is like Parse but panics if the string cannot be parsed. It simplifies safe initialization of global variables holding compiled UUIDs.
+	id := uuid.MustParse(idParam)
+
+	return id
 }
 
 func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
+	var engine bool
+	if query.Get("Engine") == "true" {
+		engine = true
+	}
+
 	filter := filters.Car{
 		Brand:  query.Get("brand"),
-		Engine: withEngine(query.Get("Engine")),
+		Engine: engine,
 	}
 
 	resp, err := h.service.GetAll(filter)
@@ -117,7 +128,17 @@ func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id := getID(r)
+	if id == uuid.Nil {
+		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
 
+		return
+	}
+
+	var car models.Car
+
+	car, err := h.service.GetByID(id)
+	setStatusCode(w, err, r.Method, car)
 }
 
 func (h handler) Update(w http.ResponseWriter, r *http.Request) {
