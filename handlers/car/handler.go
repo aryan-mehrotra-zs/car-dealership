@@ -142,7 +142,24 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) Update(w http.ResponseWriter, r *http.Request) {
+	id := getID(r)
+	if id == uuid.Nil {
+		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
 
+		return
+	}
+
+	var car models.Car
+
+	car, err := getCar(r)
+	if err != nil {
+		setStatusCode(w, err, r.Method, car)
+
+		return
+	}
+
+	car, err = h.service.Update(car)
+	setStatusCode(w, err, r.Method, car)
 }
 
 func (h handler) Delete(w http.ResponseWriter, r *http.Request) {
