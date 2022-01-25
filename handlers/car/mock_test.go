@@ -3,6 +3,7 @@ package car
 import (
 	"github.com/google/uuid"
 
+	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
 )
