@@ -163,5 +163,13 @@ func (h handler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := getID(r)
+	if id == uuid.Nil {
+		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
 
+		return
+	}
+
+	err := h.service.Delete(id)
+	setStatusCode(w, err, r.Method, nil)
 }
