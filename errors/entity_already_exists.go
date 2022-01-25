@@ -1,7 +1,11 @@
 package errors
 
-type EntityAlreadyExists struct{}
+import "fmt"
+
+type EntityAlreadyExists struct {
+	Entity string
+}
 
 func (e EntityAlreadyExists) Error() string {
-	return "entity already exists"
+	return fmt.Sprintf("Entity  %v Already Exists", e.Entity)
 }
