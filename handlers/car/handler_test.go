@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"strconv"
 	"testing"
@@ -15,31 +16,29 @@ import (
 	"github.com/amehrotra/car-dealership/filters"
 )
 
-func initializeTest(method string, body io.Reader, queryParams map[string]string) (handler, *http.Request, *httptest.ResponseRecorder) {
+func initializeTest(method string, body io.Reader, pathParams map[string]string, queryParams url.Values) (handler, *http.Request, *httptest.ResponseRecorder) {
 	h := New(mockService{})
 
 	req := httptest.NewRequest(method, "http://car", body)
-	r := mux.SetURLVars(req, queryParams)
+	r := mux.SetURLVars(req, pathParams)
+	r.URL.RawQuery = queryParams.Encode()
+
 	w := httptest.NewRecorder()
 
 	return h, r, w
 }
 
-// should we do error handling here?
-func readBody(w *httptest.ResponseRecorder, t *testing.T) ([]byte, *http.Response) {
-	resp := w.Result()
-
+func getResponseBody(resp *http.Response) ([]byte, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		t.Errorf("cannot read response")
+		return nil, err
 	}
 
-	err = resp.Body.Close()
-	if err != nil {
-		t.Errorf("Error in closing body")
+	if err = resp.Body.Close(); err != nil {
+		return nil, err
 	}
 
-	return body, resp
+	return body, nil
 }
 
 func TestHandler_Create(t *testing.T) {
@@ -62,11 +61,16 @@ func TestHandler_Create(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPost, tc.body, nil)
+		h, r, w := initializeTest(http.MethodPost, tc.body, nil, nil)
 
 		h.Create(w, r)
 
-		body, resp := readBody(w, t)
+		resp := w.Result()
+
+		body, err := getResponseBody(resp)
+		if err != nil {
+			t.Errorf("error in reading body")
+		}
 
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -109,11 +113,20 @@ func TestHandler_GetAll(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPost, http.NoBody, map[string]string{"brand": tc.car.Brand, "engine": strconv.FormatBool(tc.car.Engine)})
+		query := make(map[string][]string)
+		query["brand"] = []string{tc.car.Brand}
+		query["engine"] = []string{strconv.FormatBool(tc.car.Engine)}
+
+		h, r, w := initializeTest(http.MethodPost, http.NoBody, nil, query)
 
 		h.GetAll(w, r)
 
-		body, resp := readBody(w, t)
+		resp := w.Result()
+
+		body, err := getResponseBody(resp)
+		if err != nil {
+			t.Errorf("error in reading body")
+		}
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -142,11 +155,16 @@ func TestHandler_GetByID(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodGet, http.NoBody, map[string]string{"id": tc.id.URN()})
+		h, r, w := initializeTest(http.MethodGet, http.NoBody, map[string]string{"id": tc.id.URN()}, nil)
 
 		h.GetByID(w, r)
 
-		body, resp := readBody(w, t)
+		resp := w.Result()
+
+		body, err := getResponseBody(resp)
+		if err != nil {
+			t.Errorf("error in reading body")
+		}
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -177,11 +195,16 @@ func TestHandler_Update(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPut, tc.body, map[string]string{"id": tc.id.URN()})
+		h, r, w := initializeTest(http.MethodPut, tc.body, map[string]string{"id": tc.id.URN()}, nil)
 
 		h.Update(w, r)
 
-		body, resp := readBody(w, t)
+		resp := w.Result()
+
+		body, err := getResponseBody(resp)
+		if err != nil {
+			t.Errorf("error in reading body")
+		}
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -206,7 +229,7 @@ func TestHandler_Delete(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPut, http.NoBody, map[string]string{"id": tc.id.URN()})
+		h, r, w := initializeTest(http.MethodPut, http.NoBody, map[string]string{"id": tc.id.URN()}, nil)
 
 		h.Delete(w, r)
 
