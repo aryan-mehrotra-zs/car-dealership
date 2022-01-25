@@ -100,7 +100,7 @@ func TestHandler_GetAll(t *testing.T) {
 
 	cases := []struct {
 		desc       string
-		car        filters.Car
+		filter     filters.Car
 		resp       []byte
 		statusCode int
 	}{
@@ -109,15 +109,11 @@ func TestHandler_GetAll(t *testing.T) {
 		{"get all cars from all brands without engine", filters.Car{Brand: "", Engine: true}, allWithoutEngine, http.StatusOK},
 		{"get all cars from all brands with engine", filters.Car{Brand: "", Engine: true}, allWithEngine, http.StatusOK},
 		{"invalid brand name", filters.Car{Brand: "xyz", Engine: true}, []byte(""), http.StatusBadRequest},
-		{"database connectivity error", filters.Car{Brand: "", Engine: true}, []byte(""), http.StatusInternalServerError},
+		{"database error", filters.Car{Brand: "", Engine: true}, []byte(""), http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		query := make(map[string][]string)
-		query["brand"] = []string{tc.car.Brand}
-		query["engine"] = []string{strconv.FormatBool(tc.car.Engine)}
-
-		h, r, w := initializeTest(http.MethodPost, http.NoBody, nil, query)
+		h, r, w := initializeTest(http.MethodPost, http.NoBody, nil, map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}})
 
 		h.GetAll(w, r)
 
