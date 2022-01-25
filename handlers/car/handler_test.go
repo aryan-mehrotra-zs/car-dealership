@@ -18,20 +18,20 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Create(car models.Car) (uuid.UUID, error) {
-	return uuid.UUID{}, nil
+func (m mockService) Create(car models.Car) (models.Car, error) {
+	return models.Car{}, nil
 }
 
-func (m mockService) GetAll(param filters.Car) (models.Car, error) {
-	return models.Car{}, nil
+func (m mockService) GetAll(param filters.Car) ([]models.Car, error) {
+	return nil, nil
 }
 
 func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
 	return models.Car{}, nil
 }
 
-func (m mockService) Update(car models.Car) error {
-	return nil
+func (m mockService) Update(car models.Car) (models.Car, error) {
+	return models.Car{}, nil
 }
 
 func (m mockService) Delete(id uuid.UUID) error {
@@ -51,7 +51,7 @@ func TestHandler_Create(t *testing.T) {
 	cases := []struct {
 		desc       string
 		body       io.Reader
-		resp       []byte
+		car        []byte
 		statusCode int
 	}{
 		{"created successfully", bytes.NewReader(resp), resp, http.StatusCreated},
@@ -89,7 +89,7 @@ func TestHandler_Create(t *testing.T) {
 		}
 
 		if reflect.DeepEqual(body, resp.Body) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.car))
 		}
 	}
 }
