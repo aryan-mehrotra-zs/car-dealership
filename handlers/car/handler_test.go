@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/google/uuid"
@@ -95,41 +96,40 @@ func TestHandler_Create(t *testing.T) {
 }
 
 func TestHandler_GetAll(t *testing.T) {
-	withoutEngine := []byte(`{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol"}`)
-	withEngine := []byte(`{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}`)
-	allWithoutEngine := []byte(`{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
+	withoutEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
+						"FuelType":"Petrol"}]`)
+	withEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
+						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}]`)
+	allWithoutEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
 						"FuelType":"Petrol"}
 						{"ID":"123e4567-e89b-12d3-a457-426614174000","Model":"Mercedes","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol"}`)
-	allWithEngine := []byte(`{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
+						"FuelType":"Petrol"}]`)
+	allWithEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
 						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}
 						{"ID":"123e4567-e89b-12d3-a456-427614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
 						"FuelType":"Petrol"}
 						{"ID":"123e4567-e89b-12d3-a457-426614174000","Model":"Mercedes","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}`)
+						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}]`)
 
 	cases := []struct {
 		desc       string
-		brand      string
-		engine     string
+		car        filters.Car
 		resp       []byte
 		statusCode int
 	}{
-		{"get all cars of a brand with engine", "BMW", "1", withoutEngine, http.StatusOK},
-		{"get all cars without engine", "BMW", "0", withEngine, http.StatusOK},
-		{"get all cars from all brands without engine", "", "0", allWithoutEngine, http.StatusOK},
-		{"get all cars from all brands with engine", "", "1", allWithEngine, http.StatusOK},
-		{"get all cars from all brands with engine", "xyz", "1", []byte(""), http.StatusBadRequest},
-		{"database connectivity error", "", "1", []byte(""), http.StatusInternalServerError},
+		{"get all cars of a brand with engine", filters.Car{Brand: "BMW", Engine: true}, withoutEngine, http.StatusOK},
+		{"get all cars without engine", filters.Car{Brand: "BMW", Engine: false}, withEngine, http.StatusOK},
+		{"get all cars from all brands without engine", filters.Car{Brand: "", Engine: true}, allWithoutEngine, http.StatusOK},
+		{"get all cars from all brands with engine", filters.Car{Brand: "", Engine: true}, allWithEngine, http.StatusOK},
+		{"invalid brand name", filters.Car{Brand: "xyz", Engine: true}, []byte(""), http.StatusBadRequest},
+		{"database connectivity error", filters.Car{Brand: "", Engine: true}, []byte(""), http.StatusInternalServerError},
 	}
 
 	h := New(mockService{})
 
 	for i, tc := range cases {
 		req := httptest.NewRequest(http.MethodPost, "http://localhost:8000/car", http.NoBody)
-		r := mux.SetURLVars(req, map[string]string{"brand": tc.brand, "engine": tc.engine})
+		r := mux.SetURLVars(req, map[string]string{"brand": tc.car.Brand, "engine": strconv.FormatBool(tc.car.Engine)})
 		w := httptest.NewRecorder()
 
 		h.GetAll(w, r)
