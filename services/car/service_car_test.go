@@ -9,6 +9,7 @@ import (
 	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
+	"github.com/amehrotra/car-dealership/types"
 )
 
 func TestService_CarCreate(t *testing.T) {
@@ -26,7 +27,7 @@ func TestService_CarCreate(t *testing.T) {
 	}
 
 	car2 := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb3"),
 		Model:             "X",
 		YearOfManufacture: 0020,
 		Brand:             "BMW",
@@ -39,7 +40,7 @@ func TestService_CarCreate(t *testing.T) {
 	}
 
 	car3 := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"),
 		Model:             "X",
 		YearOfManufacture: 2020,
 		Brand:             "",
@@ -79,7 +80,30 @@ func TestService_CarCreate(t *testing.T) {
 
 func TestService_CarGetAll(t *testing.T) {
 	car := []models.Car{
-		{},
+		{
+			ID:                uuid.Nil,
+			Model:             "X",
+			YearOfManufacture: 2020,
+			Brand:             "BMW",
+			FuelType:          types.Petrol,
+			Engine: models.Engine{
+				ID:           uuid.Nil,
+				Displacement: 100,
+				NCylinder:    2,
+				Range:        0,
+			},
+		},
+	}
+
+	carWithoutEngine := []models.Car{
+		{
+			ID:                uuid.Nil,
+			Model:             "X",
+			YearOfManufacture: 2020,
+			Brand:             "BMW",
+			FuelType:          types.Petrol,
+			Engine:            models.Engine{},
+		},
 	}
 
 	cases := []struct {
@@ -88,7 +112,8 @@ func TestService_CarGetAll(t *testing.T) {
 		resp  []models.Car
 		err   error
 	}{
-		{"received all cars", filters.Car{Brand: "BMW", Engine: true,}, car, nil},
+		{"received all cars", filters.Car{Brand: "BMW", Engine: true}, car, nil},
+		{"received all cars without enginge", filters.Car{Brand: "BMW", Engine: false}, carWithoutEngine, nil},
 	}
 
 	s := New(mockEngine{}, mockCar{})
@@ -100,7 +125,7 @@ func TestService_CarGetAll(t *testing.T) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
 
-		if reflect.DeepEqual(resp, tc.resp) {
+		if reflect.DeepEqual(tc.resp, resp) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, resp, tc.resp)
 		}
 	}
@@ -127,7 +152,7 @@ func TestService_CarGetByID(t *testing.T) {
 		err  error
 	}{
 		{"received car", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), car, nil},
-		{"id not found", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"), models.Car{}, errors.EntityNotFound{}},
+		{"id not found", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb6"), models.Car{}, errors.EntityNotFound{}},
 	}
 
 	s := New(mockEngine{}, mockCar{})
@@ -159,13 +184,17 @@ func TestService_CarUpdate(t *testing.T) {
 		},
 	}
 
+	car2 := models.Car{
+		ID: uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"),
+	}
+
 	cases := []struct {
 		desc string
 		car  models.Car
 		err  error
 	}{
 		{"update successful", car, nil},
-		{"id not found", car, errors.EntityNotFound{}},
+		{"id not found", car2, errors.EntityNotFound{}},
 	}
 
 	s := New(mockEngine{}, mockCar{})
@@ -186,7 +215,7 @@ func TestService_CarDelete(t *testing.T) {
 		err  error
 	}{
 		{"delete success", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), nil},
-		{"invalid id", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), errors.EntityNotFound{}},
+		{"invalid id", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"), errors.EntityNotFound{}},
 	}
 
 	s := New(mockEngine{}, mockCar{})
