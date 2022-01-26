@@ -122,8 +122,8 @@ func (e mockEngine) Create(engine models.Engine) (uuid.UUID, error) {
 func (e mockEngine) GetByID(id uuid.UUID) (models.Engine, error) {
 	engine := models.Engine{
 		ID:           uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Displacement: 200,
-		NCylinder:    3,
+		Displacement: 100,
+		NCylinder:    2,
 		Range:        0,
 	}
 

@@ -43,7 +43,7 @@ func checkCar(car models.Car) error {
 		return errors.InvalidParam{}
 	}
 
-	if !(car.Engine.Displacement < 0 && car.Engine.NCylinder < 0 && car.Engine.Range > 0) {
+	if car.Engine.Displacement < 0 && car.Engine.NCylinder < 0 && car.Engine.Range > 0 {
 		return errors.InvalidParam{}
 	}
 

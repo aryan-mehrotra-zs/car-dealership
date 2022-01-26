@@ -12,7 +12,7 @@ import (
 	"github.com/amehrotra/car-dealership/types"
 )
 
-func TestService_CarCreate(t *testing.T) {
+func TestService_Create(t *testing.T) {
 	car := models.Car{
 		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 		Model:             "X",
@@ -20,6 +20,7 @@ func TestService_CarCreate(t *testing.T) {
 		Brand:             "BMW",
 		FuelType:          0,
 		Engine: models.Engine{
+			ID:           uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 			Displacement: 100,
 			NCylinder:    2,
 			Range:        0,
@@ -43,8 +44,8 @@ func TestService_CarCreate(t *testing.T) {
 		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"),
 		Model:             "X",
 		YearOfManufacture: 2020,
-		Brand:             "",
-		FuelType:          0,
+		Brand:             "Tesla",
+		FuelType:          1,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -55,18 +56,18 @@ func TestService_CarCreate(t *testing.T) {
 	cases := []struct {
 		desc  string
 		input models.Car
-		resp  uuid.UUID
+		resp  models.Car
 		err   error
 	}{
-		{"create successful", car, uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), nil},
-		{"invalid parameter", car2, uuid.Nil, errors.InvalidParam{}},
-		{"missing parameter", car3, uuid.Nil, errors.MissingParam{}},
+		{"create successful", car, car, nil},
+		{"invalid parameter", car2, models.Car{}, errors.InvalidParam{}},
+		{"missing parameter", car3, models.Car{}, errors.MissingParam{}},
 	}
 
 	s := New(mockEngine{}, mockCar{})
 
 	for i, tc := range cases {
-		resp, err := s.car.Create(tc.input)
+		resp, err := s.Create(tc.input)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
@@ -78,7 +79,7 @@ func TestService_CarCreate(t *testing.T) {
 	}
 }
 
-func TestService_CarGetAll(t *testing.T) {
+func TestService_GetAll(t *testing.T) {
 	car := []models.Car{
 		{
 			ID:                uuid.Nil,
@@ -119,7 +120,7 @@ func TestService_CarGetAll(t *testing.T) {
 	s := New(mockEngine{}, mockCar{})
 
 	for i, tc := range cases {
-		resp, err := s.car.GetAll(tc.input)
+		resp, err := s.GetAll(tc.input)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
@@ -139,6 +140,7 @@ func TestService_CarGetByID(t *testing.T) {
 		Brand:             "BMW",
 		FuelType:          0,
 		Engine: models.Engine{
+			ID:           uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 			Displacement: 100,
 			NCylinder:    2,
 			Range:        0,
@@ -158,7 +160,7 @@ func TestService_CarGetByID(t *testing.T) {
 	s := New(mockEngine{}, mockCar{})
 
 	for i, tc := range cases {
-		resp, err := s.car.GetByID(tc.id)
+		resp, err := s.GetByID(tc.id)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
@@ -170,7 +172,7 @@ func TestService_CarGetByID(t *testing.T) {
 	}
 }
 
-func TestService_CarUpdate(t *testing.T) {
+func TestService_Update(t *testing.T) {
 	car := models.Car{
 		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 		Model:             "X",
@@ -191,24 +193,29 @@ func TestService_CarUpdate(t *testing.T) {
 	cases := []struct {
 		desc string
 		car  models.Car
+		resp models.Car
 		err  error
 	}{
-		{"update successful", car, nil},
-		{"id not found", car2, errors.EntityNotFound{}},
+		{"update successful", car, car, nil},
+		{"id not found", car2, models.Car{}, errors.EntityNotFound{}},
 	}
 
 	s := New(mockEngine{}, mockCar{})
 
 	for i, tc := range cases {
-		err := s.car.Update(tc.car)
+		resp, err := s.Update(tc.car)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
+
+		if tc.resp != resp {
+			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, resp, tc.resp)
+		}
 	}
 }
 
-func TestService_CarDelete(t *testing.T) {
+func TestService_Delete(t *testing.T) {
 	cases := []struct {
 		desc string
 		id   uuid.UUID
@@ -221,7 +228,7 @@ func TestService_CarDelete(t *testing.T) {
 	s := New(mockEngine{}, mockCar{})
 
 	for i, tc := range cases {
-		err := s.car.Delete(tc.id)
+		err := s.Delete(tc.id)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
