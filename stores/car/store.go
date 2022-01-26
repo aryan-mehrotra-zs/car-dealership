@@ -22,6 +22,7 @@ func (c car) Create(car models.Car) (uuid.UUID, error) {
 }
 
 func (c car) GetAll(filter filters.Car) ([]models.Car, error) {
+
 	return nil, nil
 }
 
