@@ -89,8 +89,8 @@ func (s service) GetAll(filter filters.Car) ([]models.Car, error) {
 	}
 
 	if filter.Engine {
-		for i, _ := range cars {
-			engine, err := s.engine.GetByID(cars[i].ID)
+		for i, car := range cars {
+			engine, err := s.engine.GetByID(car.ID)
 			if err != nil {
 				return nil, err
 			}

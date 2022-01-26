@@ -94,12 +94,5 @@ func (m mockService) Delete(id uuid.UUID) error {
 		return errors.InvalidParam{}
 	default:
 		return errors.DB{}
-
 	}
-}
-
-type mockReader struct{}
-
-func (m mockReader) Read(p []byte) (n int, err error) {
-	return 0, errors.InvalidParam{}
 }
