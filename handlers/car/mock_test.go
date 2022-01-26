@@ -11,7 +11,17 @@ import (
 type mockService struct{}
 
 func (m mockService) Create(car models.Car) (models.Car, error) {
-	return models.Car{}, nil
+	switch car.Model {
+	case "x":
+		return car, nil
+	case "y":
+		return models.Car{}, errors.EntityAlreadyExists{}
+	case "z":
+		return models.Car{}, errors.DB{}
+	default:
+		return models.Car{}, nil
+	}
+
 }
 
 func (m mockService) GetAll(filter filters.Car) ([]models.Car, error) {

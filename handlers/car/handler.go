@@ -136,7 +136,13 @@ func setStatusCode(w http.ResponseWriter, err error, method string, data interfa
 func writeSuccessResponse(method string, w http.ResponseWriter, data interface{}) {
 	switch method {
 	case http.MethodPost:
-		writeResponseBody(w, http.StatusCreated, data)
+		if data != nil {
+			writeResponseBody(w, http.StatusCreated, data)
+
+			return
+		}
+
+		writeResponseBody(w, http.StatusOK, data)
 	case http.MethodGet:
 		writeResponseBody(w, http.StatusOK, data)
 	case http.MethodPut:

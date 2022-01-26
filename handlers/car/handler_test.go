@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/amehrotra/car-dealership/filters"
+	"github.com/amehrotra/car-dealership/models"
 )
 
 func initializeTest(method string, body io.Reader, pathParams map[string]string, queryParams url.Values) (handler, *http.Request, *httptest.ResponseRecorder) {
@@ -42,26 +43,37 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 }
 
 func TestHandler_Create(t *testing.T) {
-	res := []byte(`("ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-					"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}`)
+	res := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+	res2 := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"y","yearOfManufacture":2020,"brand":"BMW","fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+	res3 := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"z","yearOfManufacture":2020,"brand":"BMW","fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+
+	car := models.Car{
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:             "X",
+		YearOfManufacture: 2020,
+		Brand:             "BMW",
+		FuelType:          0,
+		Engine: models.Engine{
+			Displacement: 100,
+			NCylinder:    2,
+			Range:        0,
+		},
+	}
 
 	cases := []struct {
 		desc       string
-		body       io.Reader
-		car        []byte
+		body       []byte
+		car        models.Car
 		statusCode int
 	}{
-		{"created successfully", bytes.NewReader(res), res, http.StatusCreated},
-		{"entity already exists", bytes.NewReader(res), res, http.StatusOK},
-		{"unmarshal error", bytes.NewReader([]byte(`Invalid Body`)), []byte(""), http.StatusBadRequest},
-		{"missing parameter", bytes.NewReader([]byte(`{"Model":"BMW","YearOfManufacture":2022,"Brand":"BMW"}`)), []byte(""), http.StatusBadRequest},
-		{"invalid parameter", bytes.NewReader([]byte(`{"Model":BMW,"YearOfManufacture":2022,"Brand":"BMW","FuelType":"Petrol",{20,2,0}}`)), []byte(""), http.StatusBadRequest},
-		{"unable to read body", mockReader{}, []byte(""), http.StatusBadRequest},
-		{"database error", bytes.NewReader(res), res, http.StatusInternalServerError},
+		{"created successfully", res, car, http.StatusCreated},
+		{"entity already exists", res2, models.Car{}, http.StatusOK},
+		//{"unmarshal error", []byte(`invalid body`), models.Car{}, http.StatusBadRequest},
+		{"database error", res3, models.Car{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPost, tc.body, nil, nil)
+		h, r, w := initializeTest(http.MethodPost, bytes.NewReader(tc.body), nil, nil)
 
 		h.Create(w, r)
 
@@ -77,7 +89,7 @@ func TestHandler_Create(t *testing.T) {
 		}
 
 		if reflect.DeepEqual(body, resp.Body) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.car))
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), tc.car)
 		}
 	}
 }
