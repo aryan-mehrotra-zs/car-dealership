@@ -25,19 +25,77 @@ func (m mockService) Create(car models.Car) (models.Car, error) {
 }
 
 func (m mockService) GetAll(filter filters.Car) ([]models.Car, error) {
+
 	return nil, nil
 }
 
 func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
-	return models.Car{}, nil
+	car := models.Car{
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:             "X",
+		YearOfManufacture: 2020,
+		Brand:             "BMW",
+		FuelType:          0,
+		Engine: models.Engine{
+			Displacement: 100,
+			NCylinder:    2,
+			Range:        0,
+		},
+	}
+
+	switch id {
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"):
+		return car, nil
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"):
+		return models.Car{}, errors.EntityNotFound{}
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"):
+		return models.Car{}, errors.InvalidParam{}
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174003"):
+		return models.Car{}, errors.DB{}
+	default:
+		return models.Car{}, errors.DB{}
+
+	}
 }
 
 func (m mockService) Update(car models.Car) (models.Car, error) {
-	return models.Car{}, nil
+	car2 := models.Car{
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:             "X",
+		YearOfManufacture: 2020,
+		Brand:             "BMW",
+		FuelType:          0,
+		Engine: models.Engine{
+			Displacement: 100,
+			NCylinder:    2,
+			Range:        0,
+		},
+	}
+
+	switch car.ID {
+	case uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"):
+		return car2, nil
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"):
+		return models.Car{}, errors.EntityNotFound{}
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"):
+		return models.Car{}, errors.DB{}
+	default:
+		return models.Car{}, errors.DB{}
+	}
 }
 
 func (m mockService) Delete(id uuid.UUID) error {
-	return nil
+	switch id {
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"):
+		return nil
+	case uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"):
+		return errors.EntityNotFound{}
+	case uuid.Nil:
+		return errors.InvalidParam{}
+	default:
+		return errors.DB{}
+
+	}
 }
 
 type mockReader struct{}

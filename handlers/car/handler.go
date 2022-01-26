@@ -141,7 +141,6 @@ func writeSuccessResponse(method string, w http.ResponseWriter, data interface{}
 
 			return
 		}
-
 		writeResponseBody(w, http.StatusOK, data)
 	case http.MethodGet:
 		writeResponseBody(w, http.StatusOK, data)

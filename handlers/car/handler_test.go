@@ -113,7 +113,7 @@ func TestHandler_GetAll(t *testing.T) {
 	cases := []struct {
 		desc       string
 		filter     filters.Car
-		resp       []byte
+		output     []byte
 		statusCode int
 	}{
 		{"get all cars of a brand with engine", filters.Car{Brand: "BMW", Engine: true}, withoutEngine, http.StatusOK},
@@ -140,26 +140,35 @@ func TestHandler_GetAll(t *testing.T) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if reflect.DeepEqual(body, tc.resp) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
+		if reflect.DeepEqual(body, tc.output) {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.output))
 		}
 	}
 }
 
 func TestHandler_GetByID(t *testing.T) {
-	res := []byte(`{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-					"FuelType":"Petrol"}`)
+	car := models.Car{
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:             "X",
+		YearOfManufacture: 2020,
+		Brand:             "BMW",
+		FuelType:          0,
+		Engine: models.Engine{
+			Displacement: 100,
+			NCylinder:    2,
+			Range:        0,
+		},
+	}
 
 	cases := []struct {
 		desc       string
 		id         uuid.UUID
-		resp       []byte
+		output     models.Car
 		statusCode int
 	}{
-		{"request successful", uuid.UUID{}, res, http.StatusOK},
-		{"entity not found", uuid.UUID{}, []byte(""), http.StatusBadRequest},
-		{"invalid id", uuid.Nil, []byte(""), http.StatusBadRequest},
-		{"database error", uuid.UUID{}, []byte(""), http.StatusInternalServerError},
+		{"request successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), car, http.StatusOK},
+		{"invalid id", uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"), models.Car{}, http.StatusBadRequest},
+		{"database error", uuid.MustParse("123e4567-e89b-12d3-a456-426614174003"), models.Car{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
@@ -178,32 +187,44 @@ func TestHandler_GetByID(t *testing.T) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if reflect.DeepEqual(body, tc.resp) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
+		if reflect.DeepEqual(body, tc.output) {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), tc.output)
 		}
 	}
 }
 
 func TestHandler_Update(t *testing.T) {
-	fields := []byte(`{"Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-					"FuelType":"Petrol"}`)
+	fields := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW"
+		,"fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+
+	car := models.Car{
+		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:             "X",
+		YearOfManufacture: 2020,
+		Brand:             "BMW",
+		FuelType:          0,
+		Engine: models.Engine{
+			Displacement: 100,
+			NCylinder:    2,
+			Range:        0,
+		},
+	}
 
 	cases := []struct {
 		desc       string
 		id         uuid.UUID
-		body       io.Reader
-		resp       []byte
+		body       []byte
+		resp       models.Car
 		statusCode int
 	}{
-		{"entity updated successfully", uuid.UUID{}, bytes.NewReader(fields), fields, http.StatusOK},
-		{"entity does not exist", uuid.Nil, bytes.NewReader([]byte("")), []byte(""), http.StatusNotFound},
-		{"unable to read body", uuid.UUID{}, mockReader{}, []byte(""), http.StatusBadRequest},
-		{"unmarshal error", uuid.UUID{}, bytes.NewReader([]byte("invalid Body")), []byte(""), http.StatusBadRequest},
-		{"database error", uuid.UUID{}, bytes.NewReader([]byte("")), []byte(""), http.StatusInternalServerError},
+		{"entity updated successfully", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), fields, car, http.StatusOK},
+		{"entity not found", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), []byte(""), models.Car{}, http.StatusNotFound},
+		//{"unable to read body", uuid.UUID{}, mockReader{}, []byte(""), http.StatusBadRequest},
+		{"database error", uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"), []byte(""), models.Car{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPut, tc.body, map[string]string{"id": tc.id.URN()}, nil)
+		h, r, w := initializeTest(http.MethodPut, bytes.NewReader(tc.body), map[string]string{"id": tc.id.URN()}, nil)
 
 		h.Update(w, r)
 
@@ -219,7 +240,7 @@ func TestHandler_Update(t *testing.T) {
 		}
 
 		if reflect.DeepEqual(body, tc.resp) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.resp))
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), tc.resp)
 		}
 	}
 }
@@ -230,14 +251,14 @@ func TestHandler_Delete(t *testing.T) {
 		id         uuid.UUID
 		statusCode int
 	}{
-		{"delete successful", uuid.UUID{}, http.StatusNoContent},
-		{"entity does not exist", uuid.UUID{}, http.StatusNotFound},
+		{"delete successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), http.StatusNoContent},
+		//{"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), http.StatusNotFound},
 		{"invalid id", uuid.Nil, http.StatusBadRequest},
-		{"database error", uuid.UUID{}, http.StatusInternalServerError},
+		{"database error", uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"), http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPut, http.NoBody, map[string]string{"id": tc.id.URN()}, nil)
+		h, r, w := initializeTest(http.MethodDelete, http.NoBody, map[string]string{"id": tc.id.URN()}, nil)
 
 		h.Delete(w, r)
 
