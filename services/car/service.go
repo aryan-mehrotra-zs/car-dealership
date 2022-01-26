@@ -27,7 +27,7 @@ func checkCar(car models.Car) error {
 		return errors.InvalidParam{}
 	}
 
-	if car.YearOfManufacture < 1866 && car.YearOfManufacture > 2022 {
+	if car.YearOfManufacture < 1866 || car.YearOfManufacture > 2022 {
 		return errors.InvalidParam{}
 	}
 
@@ -35,15 +35,19 @@ func checkCar(car models.Car) error {
 		return errors.InvalidParam{}
 	}
 
-	if car.FuelType < 0 || car.FuelType > 4 {
+	if car.FuelType < 0 || car.FuelType > 3 {
 		return errors.InvalidParam{}
 	}
 
-	if !(car.Engine.Displacement > 0 && car.Engine.NCylinder > 0 && car.Engine.Range == 0) {
+	if car.Engine.Displacement > 0 && car.Engine.NCylinder > 0 && car.Engine.Range > 0 {
 		return errors.InvalidParam{}
 	}
 
-	if car.Engine.Displacement < 0 && car.Engine.NCylinder < 0 && car.Engine.Range > 0 {
+	if car.Engine.Displacement < 0 && car.Engine.NCylinder < 0 && car.Engine.Range < 0 {
+		return errors.InvalidParam{}
+	}
+
+	if car.Engine.Displacement == 0 && car.Engine.NCylinder == 0 && car.Engine.Range == 0 {
 		return errors.InvalidParam{}
 	}
 

@@ -235,3 +235,31 @@ func TestService_Delete(t *testing.T) {
 		}
 	}
 }
+
+func Test_CheckCar(t *testing.T) {
+	invalidEngine := models.Car{Model: "A", YearOfManufacture: 2000, Brand: "tesla", FuelType: 3, Engine: models.Engine{Displacement: 200, NCylinder: 10, Range: 10}}
+	invalidEngine2 := models.Car{Model: "A", YearOfManufacture: 2000, Brand: "tesla", FuelType: 3, Engine: models.Engine{Displacement: -1, NCylinder: -1, Range: -1}}
+	invalidEngine3 := models.Car{Model: "A", YearOfManufacture: 2000, Brand: "tesla", FuelType: 3, Engine: models.Engine{Displacement: 0, NCylinder: 0, Range: 0}}
+
+	cases := []struct {
+		desc  string
+		input models.Car
+		err   error
+	}{
+		{"invalid model", models.Car{Model: ""}, errors.InvalidParam{}},
+		{"invalid year", models.Car{Model: "X", YearOfManufacture: 1800}, errors.InvalidParam{}},
+		{"invalid Brand", models.Car{Model: "Y", YearOfManufacture: 2000, Brand: "suzuki"}, errors.InvalidParam{}},
+		{"invalid Fuel", models.Car{Model: "Z", YearOfManufacture: 2000, Brand: "tesla", FuelType: 5}, errors.InvalidParam{}},
+		{"invalid engine for petrol", invalidEngine, errors.InvalidParam{}},
+		{"invalid engine for ev", invalidEngine2, errors.InvalidParam{}},
+		{"invalid engine ", invalidEngine3, errors.InvalidParam{}},
+	}
+
+	for i, tc := range cases {
+		err := checkCar(tc.input)
+
+		if err != tc.err {
+			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
+		}
+	}
+}
