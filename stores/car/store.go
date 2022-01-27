@@ -40,7 +40,7 @@ func (c car) GetAll(filter filters.Car) ([]models.Car, error) {
 		return nil, err
 	}
 
-	cars := make([]models.Car, 0, 0)
+	cars := make([]models.Car, 0)
 
 	for rows.Next() {
 		var car models.Car
