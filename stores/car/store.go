@@ -10,15 +10,15 @@ import (
 	"github.com/amehrotra/car-dealership/models"
 )
 
-type car struct {
+type store struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) car {
-	return car{db: db}
+func New(db *sql.DB) store {
+	return store{db: db}
 }
 
-func (c car) Create(car models.Car) (uuid.UUID, error) {
+func (c store) Create(car models.Car) (uuid.UUID, error) {
 	_, err := c.db.Exec("INSERT INTO cars (id,model,year_of_manufacture,brand,fuel_type,engine_id) VALUES (?,?,?,?,?,?)",
 		car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
 	if err != nil {
@@ -27,7 +27,7 @@ func (c car) Create(car models.Car) (uuid.UUID, error) {
 	return car.ID, nil
 }
 
-func (c car) GetAll(filter filters.Car) ([]models.Car, error) {
+func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	var rows *sql.Rows
 	var err error
 
@@ -65,7 +65,7 @@ func (c car) GetAll(filter filters.Car) ([]models.Car, error) {
 	return cars, nil
 }
 
-func (c car) GetByID(id uuid.UUID) (models.Car, error) {
+func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 	var car models.Car
 
 	err := c.db.QueryRow("SELECT * FROM cars WHERE id = ?;", id.String())
@@ -76,7 +76,7 @@ func (c car) GetByID(id uuid.UUID) (models.Car, error) {
 	return car, nil
 }
 
-func (c car) Update(car models.Car) error {
+func (c store) Update(car models.Car) error {
 	_, err := c.db.Exec("UPDATE cars SET `model=?,year_of_manufacture=?,brand=?,fuel_type=?,engine_id=?` WHERE id=?", car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
 
 	if err != nil {
@@ -86,7 +86,7 @@ func (c car) Update(car models.Car) error {
 	return nil
 }
 
-func (c car) Delete(id uuid.UUID) error {
+func (c store) Delete(id uuid.UUID) error {
 	_, err := c.db.Exec("DELETE FROM cars WHERE id = ?;", id.String())
 	if err != nil {
 		return errors.DB{}
