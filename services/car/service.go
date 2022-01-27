@@ -61,7 +61,11 @@ func (s service) Create(car models.Car) (models.Car, error) {
 		return models.Car{}, err
 	}
 
-	id, err := s.engine.Create(car.Engine)
+	id := uuid.New()
+	car.ID = id
+	car.Engine.ID = id
+
+	id, err = s.engine.Create(car.Engine)
 	if err != nil {
 		return models.Car{}, err
 	}
