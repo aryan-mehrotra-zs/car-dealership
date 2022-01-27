@@ -6,5 +6,5 @@ const (
 	getCarsWithBrand = "SELECT * FROM cars WHERE brand=?;"
 	getCar           = "SELECT * FROM cars WHERE id = ?;"
 	updateCar        = "UPDATE cars SET `model=?,year_of_manufacture=?,brand=?,fuel_type=?,engine_id=?` WHERE id=?"
-	deleteCar        = "DELETE FROM cars WHERE id = ?;"
+	deleteCar        = "DELETE FROM cars WHERE id=?;"
 )
