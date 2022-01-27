@@ -17,14 +17,40 @@ func New(db *sql.DB) engine {
 }
 
 func (e engine) Create(engine models.Engine) (uuid.UUID, error) {
-	return uuid.UUID{}, nil
+	_, err := e.db.Exec("INSERT INTO engines (id,displacement,no_of_cylinder,`range`) VALUES (?,?,?,?)", engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return engine.ID, nil
+
 }
 func (e engine) GetByID(id uuid.UUID) (models.Engine, error) {
-	return models.Engine{}, nil
+	var engine models.Engine
+
+	// except id engine.ID will panic
+	err := e.db.QueryRow("SELECT * FROM engines WHERE ID=?", id).
+		Scan(engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
+	if err != nil {
+		return models.Engine{}, err
+	}
+
+	return engine, nil
 }
-func (e engine) Update(car models.Engine) error {
+
+func (e engine) Update(engine models.Engine) error {
+	_, err := e.db.Exec("UPDATE engine SET `displacement=?,no_of_cylinder=?,'range'=?` WHERE id=?", engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 func (e engine) Delete(id uuid.UUID) error {
+	_, err := e.db.Exec("DELETE FROM engines WHERE id = ?;", id.String())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
