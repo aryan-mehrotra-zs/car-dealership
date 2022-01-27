@@ -19,7 +19,7 @@ func New(db *sql.DB) stores.Engine {
 }
 
 func (e store) Create(engine models.Engine) (uuid.UUID, error) {
-	_, err := e.db.Exec("INSERT INTO engines (id,displacement,no_of_cylinder,`range`) VALUES (?,?,?,?)", engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
+	_, err := e.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
 		return uuid.Nil, errors.DB{Err: err}
 	}
@@ -31,7 +31,7 @@ func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
 	var engine models.Engine
 
 	// except id store.ID will panic
-	err := e.db.QueryRow("SELECT * FROM engines WHERE ID=?", id).
+	err := e.db.QueryRow(getEngine, id).
 		Scan(engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
 		return models.Engine{}, errors.DB{Err: err}
@@ -41,7 +41,7 @@ func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
 }
 
 func (e store) Update(engine models.Engine) error {
-	_, err := e.db.Exec("UPDATE store SET `displacement=?,no_of_cylinder=?,'range'=?` WHERE id=?", engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
+	_, err := e.db.Exec(updateEngine, engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
 	if err != nil {
 		return errors.DB{Err: err}
 	}
@@ -49,7 +49,7 @@ func (e store) Update(engine models.Engine) error {
 	return nil
 }
 func (e store) Delete(id uuid.UUID) error {
-	_, err := e.db.Exec("DELETE FROM engines WHERE id = ?;", id.String())
+	_, err := e.db.Exec(deleteEngine, id.String())
 	if err != nil {
 		return errors.DB{Err: err}
 	}
