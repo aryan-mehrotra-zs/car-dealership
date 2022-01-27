@@ -74,7 +74,6 @@ func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 
 	err := c.db.QueryRow(getCar, id.String()).
 		Scan(car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.Engine.ID)
-
 	if err != nil {
 		return models.Car{}, errors.DB{Err: err}
 	}
