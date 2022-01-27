@@ -15,6 +15,7 @@ import (
 
 	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
+	"github.com/amehrotra/car-dealership/types"
 )
 
 func initializeTest(method string, body io.Reader, pathParams map[string]string, queryParams url.Values) (handler, *http.Request, *httptest.ResponseRecorder) {
@@ -95,37 +96,45 @@ func TestHandler_Create(t *testing.T) {
 }
 
 func TestHandler_GetAll(t *testing.T) {
-	withoutEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol"}]`)
-	withEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}]`)
-	allWithoutEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol"}
-						{"ID":"123e4567-e89b-12d3-a457-426614174000","Model":"Mercedes","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol"}]`)
-	allWithEngine := []byte(`[{"ID":"123e4567-e89b-12d3-a456-426614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}
-						{"ID":"123e4567-e89b-12d3-a456-427614174000","Model":"BMW","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol"}
-						{"ID":"123e4567-e89b-12d3-a457-426614174000","Model":"Mercedes","YearOfManufacture":2022,"Brand":"BMW",
-						"FuelType":"Petrol",{"Displacement":20,"NCylinder":2,"Range":0}}]`)
+	withEngine := []models.Car{
+		{
+			ID:                uuid.Nil,
+			Model:             "X",
+			YearOfManufacture: 2020,
+			Brand:             "BMW",
+			FuelType:          types.Petrol,
+			Engine: models.Engine{
+				ID:           uuid.Nil,
+				Displacement: 100,
+				NCylinder:    2,
+				Range:        0,
+			},
+		},
+	}
+
+	withoutEngine := []models.Car{
+		{
+			ID:                uuid.Nil,
+			Model:             "X",
+			YearOfManufacture: 2020,
+			Brand:             "BMW",
+			FuelType:          types.Petrol,
+			Engine:            models.Engine{},
+		},
+	}
 
 	cases := []struct {
 		desc       string
 		filter     filters.Car
-		output     []byte
+		output     []models.Car
 		statusCode int
 	}{
-		{"get all cars of a brand with engine", filters.Car{Brand: "BMW", Engine: true}, withoutEngine, http.StatusOK},
-		{"get all cars without engine", filters.Car{Brand: "BMW", Engine: false}, withEngine, http.StatusOK},
-		{"get all cars from all brands without engine", filters.Car{Brand: "", Engine: true}, allWithoutEngine, http.StatusOK},
-		{"get all cars from all brands with engine", filters.Car{Brand: "", Engine: true}, allWithEngine, http.StatusOK},
-		{"invalid brand name", filters.Car{Brand: "xyz", Engine: true}, []byte(""), http.StatusBadRequest},
-		{"database error", filters.Car{Brand: "", Engine: true}, []byte(""), http.StatusInternalServerError},
+		{"get all cars  with engine", filters.Car{Brand: "BMW", Engine: true}, withEngine, http.StatusOK},
+		{"get all cars without engine", filters.Car{Brand: "BMW", Engine: false}, withoutEngine, http.StatusOK},
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodPost, http.NoBody, nil, map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}})
+		h, r, w := initializeTest(http.MethodGet, http.NoBody, nil, map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}})
 
 		h.GetAll(w, r)
 
@@ -141,7 +150,7 @@ func TestHandler_GetAll(t *testing.T) {
 		}
 
 		if reflect.DeepEqual(body, tc.output) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), string(tc.output))
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), (tc.output))
 		}
 	}
 }

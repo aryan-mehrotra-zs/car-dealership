@@ -6,6 +6,7 @@ import (
 	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
+	"github.com/amehrotra/car-dealership/types"
 )
 
 type mockService struct{}
@@ -25,8 +26,44 @@ func (m mockService) Create(car models.Car) (models.Car, error) {
 }
 
 func (m mockService) GetAll(filter filters.Car) ([]models.Car, error) {
+	withEngine := []models.Car{
+		{
+			ID:                uuid.Nil,
+			Model:             "X",
+			YearOfManufacture: 2020,
+			Brand:             "BMW",
+			FuelType:          types.Petrol,
+			Engine: models.Engine{
+				ID:           uuid.Nil,
+				Displacement: 100,
+				NCylinder:    2,
+				Range:        0,
+			},
+		},
+	}
 
-	return nil, nil
+	withoutEngine := []models.Car{
+		{
+			ID:                uuid.Nil,
+			Model:             "X",
+			YearOfManufacture: 2020,
+			Brand:             "BMW",
+			FuelType:          types.Petrol,
+			Engine:            models.Engine{},
+		},
+	}
+
+	switch filter {
+	case filters.Car{Brand: "BMW", Engine: true}:
+		return withEngine, nil
+	case filters.Car{Brand: "BMW", Engine: false}:
+		return withoutEngine, nil
+	case filters.Car{Brand: "xyz", Engine: true}:
+		return nil, errors.InvalidParam{}
+	default:
+		return nil, nil
+	}
+
 }
 
 func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
