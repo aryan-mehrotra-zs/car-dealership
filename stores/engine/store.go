@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/models"
 )
 
@@ -19,7 +20,7 @@ func New(db *sql.DB) engine {
 func (e engine) Create(engine models.Engine) (uuid.UUID, error) {
 	_, err := e.db.Exec("INSERT INTO engines (id,displacement,no_of_cylinder,`range`) VALUES (?,?,?,?)", engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, errors.DB{}
 	}
 
 	return engine.ID, nil
@@ -32,7 +33,7 @@ func (e engine) GetByID(id uuid.UUID) (models.Engine, error) {
 	err := e.db.QueryRow("SELECT * FROM engines WHERE ID=?", id).
 		Scan(engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
-		return models.Engine{}, err
+		return models.Engine{}, errors.DB{}
 	}
 
 	return engine, nil
@@ -41,7 +42,7 @@ func (e engine) GetByID(id uuid.UUID) (models.Engine, error) {
 func (e engine) Update(engine models.Engine) error {
 	_, err := e.db.Exec("UPDATE engine SET `displacement=?,no_of_cylinder=?,'range'=?` WHERE id=?", engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
 	if err != nil {
-		return err
+		return errors.DB{}
 	}
 
 	return nil
@@ -49,7 +50,7 @@ func (e engine) Update(engine models.Engine) error {
 func (e engine) Delete(id uuid.UUID) error {
 	_, err := e.db.Exec("DELETE FROM engines WHERE id = ?;", id.String())
 	if err != nil {
-		return err
+		return errors.DB{}
 	}
 
 	return nil
