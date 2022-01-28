@@ -66,8 +66,6 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	car, err := h.service.GetByID(id)
 
-	log.Println(err)
-
 	setStatusCode(w, err, r.Method, car)
 }
 
@@ -80,7 +78,6 @@ func (h handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var car models.Car
-
 	car, err := getCar(r)
 	if err != nil {
 		setStatusCode(w, err, r.Method, car)

@@ -132,11 +132,15 @@ func (s service) Update(car models.Car) (models.Car, error) {
 		return models.Car{}, err
 	}
 
-	err = s.car.Update(car)
+	err = checkCar(car)
 	if err != nil {
 		return models.Car{}, err
 	}
 
+	err = s.car.Update(car)
+	if err != nil {
+		return models.Car{}, err
+	}
 	return car, nil
 }
 
