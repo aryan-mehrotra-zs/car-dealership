@@ -68,6 +68,9 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	var car models.Car
 
 	car, err := h.service.GetByID(id)
+
+	log.Println(err)
+
 	setStatusCode(w, err, r.Method, car)
 }
 

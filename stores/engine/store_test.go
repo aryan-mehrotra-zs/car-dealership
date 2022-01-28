@@ -136,6 +136,7 @@ func TestStore_Update(t *testing.T) {
 		Range:        0,
 	}
 
+	// why error cant be nil here
 	mock.ExpectExec(updateEngine).WithArgs(engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec(updateEngine).WithArgs(engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String()).

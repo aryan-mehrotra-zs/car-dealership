@@ -33,7 +33,7 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	var rows *sql.Rows
 	var err error
 
-	if filter.Brand == "" {
+	if filter.Brand != "" {
 		rows, err = c.db.Query(getCarsWithBrand, filter.Brand)
 	} else {
 		rows, err = c.db.Query(getCars)
@@ -73,7 +73,7 @@ func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 	var car models.Car
 
 	err := c.db.QueryRow(getCar, id.String()).
-		Scan(car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.Engine.ID)
+		Scan(&car.ID, &car.Model, &car.YearOfManufacture, &car.Brand, &car.FuelType, &car.Engine.ID)
 	if err != nil {
 		return models.Car{}, errors.DB{Err: err}
 	}

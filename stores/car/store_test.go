@@ -87,6 +87,7 @@ func TestStore_Create(t *testing.T) {
 }
 
 func TestStore_GetAll(t *testing.T) {
+	// Case 1 failing
 	db, mock, s := initializeTests(t)
 	defer db.Close()
 
@@ -108,13 +109,17 @@ func TestStore_GetAll(t *testing.T) {
 		},
 	}
 
+	scanError := goError.New("scan error")
+	queryError := goError.New("query error")
+	readError := goError.New("error reading the row")
+
 	rows := sqlmock.NewRows([]string{"id", "model", "year_of_manufacture", "brand", "fuel_type", "engine_id"}).
 		AddRow(id.String(), "X", 2020, "BMW", 1, id.String())
 
 	mock.ExpectQuery(getCarsWithBrand).WithArgs("BMW").WillReturnRows(rows)
-	//mock.ExpectQuery(getCars).WithArgs().WillReturnError(goError.New("error reading the row"))
-	//mock.ExpectQuery(getCars).WithArgs().WillReturnError(goError.New("query error"))
-	//mock.ExpectQuery(getCars).WithArgs().WillReturnError(goError.New("scan error"))
+	mock.ExpectQuery(getCars).WillReturnError(readError)
+	mock.ExpectQuery(getCars).WillReturnError(queryError)
+	mock.ExpectQuery(getCars).WillReturnError(scanError)
 
 	cases := []struct {
 		desc   string
@@ -123,9 +128,9 @@ func TestStore_GetAll(t *testing.T) {
 		err    error
 	}{
 		{"success case", filters.Car{Brand: "BMW"}, cars, nil},
-		//{"rows error", filters.Car{}, nil, errors.DB{Err: goError.New("error reading the row")}},
-		//{"query error", filters.Car{}, nil, errors.DB{Err: goError.New("query error")}},
-		//{"scan error", filters.Car{}, nil, errors.DB{Err: goError.New("scan error")}},
+		{"rows error", filters.Car{}, nil, errors.DB{Err: readError}},
+		{"query error", filters.Car{}, nil, errors.DB{Err: queryError}},
+		{"scan error", filters.Car{}, nil, errors.DB{Err: scanError}},
 	}
 
 	for i, tc := range cases {
