@@ -39,8 +39,9 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
+
 	var engine bool
-	if query.Get("Engine") == "true" {
+	if query.Get("engine") == "true" {
 		engine = true
 	}
 
