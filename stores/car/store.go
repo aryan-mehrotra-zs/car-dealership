@@ -63,6 +63,8 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 		if err := rows.Scan(&car.ID, &car.Model, &car.YearOfManufacture, &car.Brand, &car.FuelType, &car.Engine.ID); err != nil {
 			return nil, errors.DB{Err: err}
 		}
+
+		cars = append(cars, car)
 	}
 
 	return cars, nil
