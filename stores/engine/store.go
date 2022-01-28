@@ -30,9 +30,8 @@ func (e store) Create(engine models.Engine) (uuid.UUID, error) {
 func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
 	var engine models.Engine
 
-	// except id store.ID will panic
 	err := e.db.QueryRow(getEngine, id).
-		Scan(engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
+		Scan(&engine.ID, &engine.Displacement, &engine.NCylinder, &engine.Range)
 	if err != nil {
 		return models.Engine{}, errors.DB{Err: err}
 	}
