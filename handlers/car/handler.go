@@ -33,15 +33,12 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	car.ID = uuid.New()
-
 	car, err = h.service.Create(car)
 	setStatusCode(w, err, r.Method, car)
 }
 
 func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
-
 	var engine bool
 	if query.Get("Engine") == "true" {
 		engine = true
