@@ -87,7 +87,6 @@ func TestStore_Create(t *testing.T) {
 }
 
 func TestStore_GetAll(t *testing.T) {
-	// Case 1 failing
 	db, mock, s := initializeTests(t)
 	defer db.Close()
 
@@ -134,16 +133,15 @@ func TestStore_GetAll(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		cars, err := s.GetAll(tc.filter)
+		car, err := s.GetAll(tc.filter)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
 
-		if !reflect.DeepEqual(cars, tc.output) {
+		if !reflect.DeepEqual(car, tc.output) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
-
 	}
 }
 
@@ -164,8 +162,8 @@ func TestStore_GetByID(t *testing.T) {
 		FuelType:          0,
 		Engine: models.Engine{
 			ID:           id,
-			Displacement: 100,
-			NCylinder:    2,
+			Displacement: 0,
+			NCylinder:    0,
 			Range:        0,
 		},
 	}
@@ -176,7 +174,7 @@ func TestStore_GetByID(t *testing.T) {
 		AddRow(id.String(), "X", 2020, "BMW", 1, id.String())
 
 	mock.ExpectQuery(getCar).WithArgs(id).WillReturnRows(rows)
-	mock.ExpectQuery(getCar).WithArgs(id).WillReturnError(queryErr)
+	mock.ExpectQuery(getCar).WithArgs(uuid.Nil).WillReturnError(queryErr)
 
 	cases := []struct {
 		desc   string
