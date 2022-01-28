@@ -25,7 +25,6 @@ func (c store) Create(car models.Car) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, errors.DB{Err: err}
 	}
-
 	return car.ID, nil
 }
 
@@ -61,7 +60,7 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	for rows.Next() {
 		var car models.Car
 
-		if err := rows.Scan(car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.Engine.ID); err != nil {
+		if err := rows.Scan(&car.ID, &car.Model, &car.YearOfManufacture, &car.Brand, &car.FuelType, &car.Engine.ID); err != nil {
 			return nil, errors.DB{Err: err}
 		}
 	}
