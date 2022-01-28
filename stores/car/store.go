@@ -61,7 +61,7 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 		var car models.Car
 
 		if err := rows.Scan(&car.ID, &car.Model, &car.YearOfManufacture, &car.Brand, &car.FuelType, &car.Engine.ID); err != nil {
-			return nil, errors.DB{Err: err}
+			return nil, errors.DB{Err: errors.RowScan{}}
 		}
 	}
 
@@ -81,7 +81,8 @@ func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 }
 
 func (c store) Update(car models.Car) error {
-	_, err := c.db.Exec(updateCar, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
+	_, err := c.db.Exec(updateCar, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID, car.ID)
+	log.Println(err)
 
 	if err != nil {
 		return errors.DB{Err: err}
