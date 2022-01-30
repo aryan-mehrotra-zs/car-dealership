@@ -21,6 +21,12 @@ func (f *Fuel) Scan(value interface{}) error {
 	case "petrol":
 		*f = Fuel(1)
 		return nil
+	case "diesel":
+		*f = Fuel(2)
+		return nil
+	case "ev":
+		*f = Fuel(3)
+		return nil
 	}
 	return nil
 }
