@@ -20,6 +20,7 @@ func New(db *sql.DB) stores.Car {
 	return store{db: db}
 }
 
+// Create executes command in database to create car entity
 func (c store) Create(car models.Car) (uuid.UUID, error) {
 	_, err := c.db.Exec(insertCar, car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
 	if err != nil {
@@ -28,6 +29,7 @@ func (c store) Create(car models.Car) (uuid.UUID, error) {
 	return car.ID, nil
 }
 
+// GetAll executes query in database to get all cars based on filter
 func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	var rows *sql.Rows
 	var err error
@@ -70,6 +72,7 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	return cars, nil
 }
 
+// GetByID query the car from database using id
 func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 	var car models.Car
 
@@ -82,6 +85,7 @@ func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 	return car, nil
 }
 
+// Update executes command to update fields of car
 func (c store) Update(car models.Car) error {
 	_, err := c.db.Exec(updateCar, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
 
@@ -92,6 +96,7 @@ func (c store) Update(car models.Car) error {
 	return nil
 }
 
+// Delete executes command to delete engine
 func (c store) Delete(id uuid.UUID) error {
 	_, err := c.db.Exec(deleteCar, id.String())
 	if err != nil {

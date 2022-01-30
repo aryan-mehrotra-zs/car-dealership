@@ -18,6 +18,7 @@ func New(db *sql.DB) stores.Engine {
 	return store{db: db}
 }
 
+// Create executes command in database to create engine entity
 func (e store) Create(engine models.Engine) (uuid.UUID, error) {
 	_, err := e.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
@@ -27,6 +28,8 @@ func (e store) Create(engine models.Engine) (uuid.UUID, error) {
 	return engine.ID, nil
 
 }
+
+// GetByID query the engine from database using id
 func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
 	var engine models.Engine
 
@@ -39,6 +42,7 @@ func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
 	return engine, nil
 }
 
+// Update executes command to update fields of engine
 func (e store) Update(engine models.Engine) error {
 	_, err := e.db.Exec(updateEngine, engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
 	if err != nil {
@@ -47,6 +51,8 @@ func (e store) Update(engine models.Engine) error {
 
 	return nil
 }
+
+// Delete executes command to delete engine
 func (e store) Delete(id uuid.UUID) error {
 	_, err := e.db.Exec(deleteEngine, id.String())
 	if err != nil {
