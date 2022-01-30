@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	// database connection
 	db, err := drivers.ConnectToSQL()
 	if err != nil {
 		return
@@ -26,6 +27,7 @@ func main() {
 		}
 	}()
 
+	// dependency injection
 	carStore := car.New(db)
 	engineStore := engine.New(db)
 	service := services.New(engineStore, carStore)
@@ -38,11 +40,13 @@ func main() {
 	r.HandleFunc("/car/{id}", handler.Update).Methods(http.MethodPut)
 	r.HandleFunc("/car/{id}", handler.Delete).Methods(http.MethodDelete)
 
+	// setup server variables
 	srv := &http.Server{
 		Handler: r,
 		Addr:    "127.0.0.1:8000",
 	}
 
+	// start server
 	log.Fatal(srv.ListenAndServe())
 
 }
