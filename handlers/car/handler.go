@@ -23,6 +23,7 @@ func New(service services.Car) handler {
 	return handler{service: service}
 }
 
+// Create takes the clients request to create entity in database
 func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	var car models.Car
 
@@ -37,6 +38,7 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 	setStatusCode(w, err, r.Method, car)
 }
 
+// GetAll writes all the cars from the database based on the query parameter
 func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
@@ -55,9 +57,10 @@ func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GetByID writes the car based on ID of the car
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id := getID(r)
-	if id == uuid.Nil {
+	id, err := getID(r)
+	if err != nil {
 		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
 
 		return
@@ -65,21 +68,24 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	var car models.Car
 
-	car, err := h.service.GetByID(id)
+	car, err = h.service.GetByID(id)
 
 	setStatusCode(w, err, r.Method, car)
 }
 
+// Update writes the updated car entity in the database
 func (h handler) Update(w http.ResponseWriter, r *http.Request) {
-	id := getID(r)
-	if id == uuid.Nil {
+	id, err := getID(r)
+	if err != nil {
 		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
 
 		return
 	}
 
 	var car models.Car
-	car, err := getCar(r)
+	car.ID = id
+
+	car, err = getCar(r)
 	if err != nil {
 		setStatusCode(w, err, r.Method, car)
 
@@ -90,18 +96,20 @@ func (h handler) Update(w http.ResponseWriter, r *http.Request) {
 	setStatusCode(w, err, r.Method, car)
 }
 
+// Delete removes the car from database based on ID
 func (h handler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := getID(r)
-	if id == uuid.Nil {
+	id, err := getID(r)
+	if err != nil {
 		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
 
 		return
 	}
 
-	err := h.service.Delete(id)
+	err = h.service.Delete(id)
 	setStatusCode(w, err, r.Method, nil)
 }
 
+// getCar return the car by reading and unmarshal the body
 func getCar(r *http.Request) (models.Car, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -118,6 +126,7 @@ func getCar(r *http.Request) (models.Car, error) {
 	return car, nil
 }
 
+// setStatusCode writes the status code based on the error type
 func setStatusCode(w http.ResponseWriter, err error, method string, data interface{}) {
 	switch err.(type) {
 	case errors.EntityAlreadyExists:
@@ -131,6 +140,7 @@ func setStatusCode(w http.ResponseWriter, err error, method string, data interfa
 	}
 }
 
+// writeSuccessResponse based on the method type it calls function writeResponseBody
 func writeSuccessResponse(method string, w http.ResponseWriter, data interface{}) {
 	switch method {
 	case http.MethodPost:
@@ -149,8 +159,10 @@ func writeSuccessResponse(method string, w http.ResponseWriter, data interface{}
 	}
 }
 
+// writeResponseBody marshals the data and writes the body which is sent to client
 func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+
 	resp, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -168,13 +180,15 @@ func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) 
 	}
 }
 
-func getID(r *http.Request) uuid.UUID {
+// getID reads the id from path parameter of url
+func getID(r *http.Request) (uuid.UUID, error) {
 	param := mux.Vars(r)
 	idParam := param["id"]
 
-	// How to handle panics
-	// MustParse is like Parse but panics if the string cannot be parsed. It simplifies safe initialization of global variables holding compiled UUIDs.
-	id := uuid.MustParse(idParam)
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return uuid.Nil, errors.InvalidParam{}
+	}
 
-	return id
+	return id, nil
 }
