@@ -54,7 +54,7 @@ func TestStore_Create(t *testing.T) {
 		err    error
 	}{
 		{"success case", engine, id, nil},
-		{desc: "failure case", input: engine, output: uuid.Nil, err: errors.DB{queryError}},
+		{"failure case", engine, uuid.Nil, errors.DB{Err: queryError}},
 	}
 
 	for i, tc := range cases {

@@ -231,7 +231,7 @@ func TestStore_Update(t *testing.T) {
 		err   error
 	}{
 		{"success", car, nil},
-		{"failure", car, errors.DB{updateFailed}},
+		{"failure", car, errors.DB{Err: updateFailed}},
 	}
 
 	for i, tc := range cases {
