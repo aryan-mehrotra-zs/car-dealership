@@ -58,6 +58,10 @@ func (s service) Create(car models.Car) (models.Car, error) {
 
 // GetAll based on filter extracts data from store about cars
 func (s service) GetAll(filter filters.Car) ([]models.Car, error) {
+	if checkBrand(filter.Brand) != nil {
+		return nil, errors.InvalidParam{}
+	}
+
 	cars, err := s.car.GetAll(filter)
 	if err != nil {
 		return []models.Car{}, errors.DB{}
@@ -130,8 +134,6 @@ func (s service) Delete(id uuid.UUID) error {
 
 // checkCar validates the all parameters of the car
 func checkCar(car models.Car) error {
-	brands := map[string]bool{"tesla": true, "porsche": true, "bmw": true, "mercedes": true, "ferrari": true}
-
 	if car.Model == "" {
 		return errors.InvalidParam{}
 	}
@@ -140,7 +142,7 @@ func checkCar(car models.Car) error {
 		return errors.InvalidParam{}
 	}
 
-	if _, ok := brands[strings.ToLower(car.Brand)]; !ok {
+	if checkBrand(car.Brand) != nil {
 		return errors.InvalidParam{}
 	}
 
@@ -157,6 +159,16 @@ func checkCar(car models.Car) error {
 	}
 
 	if car.Engine.Displacement == 0 && car.Engine.NCylinder == 0 && car.Engine.Range == 0 {
+		return errors.InvalidParam{}
+	}
+
+	return nil
+}
+
+func checkBrand(brand string) error {
+	brands := map[string]bool{"tesla": true, "porsche": true, "bmw": true, "mercedes": true, "ferrari": true}
+
+	if _, ok := brands[strings.ToLower(brand)]; !ok {
 		return errors.InvalidParam{}
 	}
 
