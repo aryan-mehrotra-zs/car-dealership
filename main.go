@@ -8,6 +8,7 @@ import (
 
 	"github.com/amehrotra/car-dealership/drivers"
 	handlers "github.com/amehrotra/car-dealership/handlers/car"
+	"github.com/amehrotra/car-dealership/middlewares"
 	services "github.com/amehrotra/car-dealership/services/car"
 	"github.com/amehrotra/car-dealership/stores/car"
 	"github.com/amehrotra/car-dealership/stores/engine"
@@ -39,6 +40,9 @@ func main() {
 	r.HandleFunc("/car/{id}", handler.GetByID).Methods(http.MethodGet)
 	r.HandleFunc("/car/{id}", handler.Update).Methods(http.MethodPut)
 	r.HandleFunc("/car/{id}", handler.Delete).Methods(http.MethodDelete)
+
+	// authentication middleware
+	r.Use(middlewares.AuthMiddleware)
 
 	// setup server variables
 	srv := &http.Server{
