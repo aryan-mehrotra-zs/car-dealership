@@ -58,8 +58,14 @@ func (s service) Create(car models.Car) (models.Car, error) {
 
 // GetAll based on filter extracts data from store about cars
 func (s service) GetAll(filter filters.Car) ([]models.Car, error) {
-	if checkBrand(filter.Brand) != nil {
+	// validate brand from filter
+	switch {
+	case filter.Brand == "":
+		break
+	case checkBrand(filter.Brand) != nil:
 		return nil, errors.InvalidParam{}
+	default:
+		break
 	}
 
 	cars, err := s.car.GetAll(filter)
