@@ -109,23 +109,23 @@ func (s service) GetByID(id uuid.UUID) (models.Car, error) {
 }
 
 // Update updates the engine followed by car
-func (s service) Update(car *models.Car) (models.Car, error) {
+func (s service) Update(car models.Car) (models.Car, error) {
 	err := s.engine.Update(car.Engine)
 	if err != nil {
 		return models.Car{}, err
 	}
 
-	err = checkCar(*car)
+	err = checkCar(car)
 	if err != nil {
 		return models.Car{}, err
 	}
 
-	err = s.car.Update(*car)
+	err = s.car.Update(car)
 	if err != nil {
 		return models.Car{}, err
 	}
 
-	return *car, nil
+	return car, nil
 }
 
 // Delete deletes the car from store
