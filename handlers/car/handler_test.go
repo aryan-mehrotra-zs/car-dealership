@@ -73,7 +73,7 @@ func TestHandler_Create(t *testing.T) {
 	}{
 		{"created successfully", res, car, http.StatusCreated},
 		{"entity already exists", res2, models.Car{}, http.StatusOK},
-		//{"unmarshal error", []byte(`invalid body`), models.Car{}, http.StatusBadRequest},
+		// {"unmarshal error", []byte(`invalid body`), models.Car{}, http.StatusBadRequest},
 		{"database error", res3, models.Car{}, http.StatusInternalServerError},
 	}
 
@@ -138,7 +138,8 @@ func TestHandler_GetAll(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, r, w := initializeTest(http.MethodGet, http.NoBody, nil, map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}})
+		h, r, w := initializeTest(http.MethodGet, http.NoBody, nil,
+			map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}})
 
 		h.GetAll(w, r)
 
@@ -232,7 +233,7 @@ func TestHandler_Update(t *testing.T) {
 	}{
 		{"entity updated successfully", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), fields, car, http.StatusOK},
 		{"entity not found", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), []byte(""), models.Car{}, http.StatusNotFound},
-		//{"unable to read body", uuid.UUID{}, mockReader{}, []byte(""), http.StatusBadRequest},
+		// {"unable to read body", uuid.UUID{}, mockReader{}, []byte(""), http.StatusBadRequest},
 		{"database error", uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"), []byte(""), models.Car{}, http.StatusInternalServerError},
 	}
 
@@ -266,7 +267,7 @@ func TestHandler_Delete(t *testing.T) {
 		statusCode int
 	}{
 		{"delete successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), http.StatusNoContent},
-		//{"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), http.StatusNotFound},
+		// {"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), http.StatusNotFound},
 		{"invalid id", uuid.Nil, http.StatusBadRequest},
 		{"database error", uuid.MustParse("123e4567-e89b-12d3-a456-426614174002"), http.StatusInternalServerError},
 	}

@@ -34,7 +34,7 @@ func (h handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	car, err = h.service.Create(car)
+	car, err = h.service.Create(&car)
 	setStatusCode(w, err, r.Method, car)
 }
 
