@@ -5,26 +5,59 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/models"
+	"github.com/amehrotra/car-dealership/stores"
 )
 
-type engine struct {
+type store struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) engine {
-	return engine{db: db}
+func New(db *sql.DB) stores.Engine {
+	return store{db: db}
 }
 
-func (e engine) Create(engine models.Engine) (uuid.UUID, error) {
-	return uuid.UUID{}, nil
+// Create executes command in database to create engine entity
+func (e store) Create(engine models.Engine) (uuid.UUID, error) {
+	_, err := e.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
+	if err != nil {
+		return uuid.Nil, errors.DB{Err: err}
+	}
+
+	return engine.ID, nil
+
 }
-func (e engine) GetByID(id uuid.UUID) (models.Engine, error) {
-	return models.Engine{}, nil
+
+// GetByID query the engine from database using id
+func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
+	var engine models.Engine
+
+	err := e.db.QueryRow(getEngine, id).
+		Scan(&engine.ID, &engine.Displacement, &engine.NCylinder, &engine.Range)
+	if err != nil {
+		return models.Engine{}, errors.DB{Err: err}
+	}
+
+	return engine, nil
 }
-func (e engine) Update(car models.Engine) error {
+
+// Update executes command to update fields of engine
+func (e store) Update(engine models.Engine) error {
+	_, err := e.db.Exec(updateEngine, engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
+	if err != nil {
+		return errors.DB{Err: err}
+	}
+
 	return nil
 }
-func (e engine) Delete(id uuid.UUID) error {
+
+// Delete executes command to delete engine
+func (e store) Delete(id uuid.UUID) error {
+	_, err := e.db.Exec(deleteEngine, id.String())
+	if err != nil {
+		return errors.DB{Err: err}
+	}
+
 	return nil
 }
