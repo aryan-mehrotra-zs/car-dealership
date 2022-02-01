@@ -37,7 +37,6 @@ func TestStore_Create(t *testing.T) {
 		ID:           id,
 		Displacement: 200,
 		NCylinder:    2,
-		Range:        0,
 	}
 
 	queryError := goError.New("error in inserting")
@@ -67,7 +66,6 @@ func TestStore_Create(t *testing.T) {
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
-
 	}
 }
 
@@ -86,7 +84,6 @@ func TestStore_GetByID(t *testing.T) {
 		ID:           id,
 		Displacement: 200,
 		NCylinder:    2,
-		Range:        0,
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "displacement", "no_of_cylinder", "range"}).
@@ -133,7 +130,6 @@ func TestStore_Update(t *testing.T) {
 		ID:           id,
 		Displacement: 200,
 		NCylinder:    2,
-		Range:        0,
 	}
 
 	mock.ExpectExec(updateEngine).WithArgs(engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String()).
@@ -190,5 +186,4 @@ func TestStore_Delete(t *testing.T) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
 	}
-
 }

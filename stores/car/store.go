@@ -20,24 +20,27 @@ func New(db *sql.DB) stores.Car {
 	return store{db: db}
 }
 
-// Create executes command in database to create car entity
-func (c store) Create(car models.Car) (uuid.UUID, error) {
-	_, err := c.db.Exec(insertCar, car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
+// Create inserts a new car in the database
+func (s store) Create(car models.Car) (uuid.UUID, error) {
+	_, err := s.db.Exec(insertCar, car.ID, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID)
 	if err != nil {
 		return uuid.Nil, errors.DB{Err: err}
 	}
+
 	return car.ID, nil
 }
 
-// GetAll executes query in database to get all cars based on filter
-func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
-	var rows *sql.Rows
-	var err error
+// GetAll fetches cars based on filter
+func (s store) GetAll(filter filters.Car) ([]models.Car, error) {
+	var (
+		rows *sql.Rows
+		err  error
+	)
 
 	if filter.Brand != "" {
-		rows, err = c.db.Query(getCarsWithBrand, filter.Brand)
+		rows, err = s.db.Query(getCarsWithBrand, filter.Brand)
 	} else {
-		rows, err = c.db.Query(getCars)
+		rows, err = s.db.Query(getCars)
 	}
 
 	if err != nil {
@@ -62,7 +65,7 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	for rows.Next() {
 		var car models.Car
 
-		if err := rows.Scan(&car.ID, &car.Model, &car.YearOfManufacture, &car.Brand, &car.FuelType, &car.Engine.ID); err != nil {
+		if err := rows.Scan(&car.ID, &car.Model, &car.ManufactureYear, &car.Brand, &car.FuelType, &car.Engine.ID); err != nil {
 			return nil, errors.DB{Err: err}
 		}
 
@@ -72,12 +75,12 @@ func (c store) GetAll(filter filters.Car) ([]models.Car, error) {
 	return cars, nil
 }
 
-// GetByID query the car from database using id
-func (c store) GetByID(id uuid.UUID) (models.Car, error) {
+// GetByID fetches the car from database of the given id
+func (s store) GetByID(id uuid.UUID) (models.Car, error) {
 	var car models.Car
 
-	err := c.db.QueryRow(getCar, id.String()).
-		Scan(&car.ID, &car.Model, &car.YearOfManufacture, &car.Brand, &car.FuelType, &car.Engine.ID)
+	err := s.db.QueryRow(getCar, id.String()).
+		Scan(&car.ID, &car.Model, &car.ManufactureYear, &car.Brand, &car.FuelType, &car.Engine.ID)
 	if err != nil {
 		return models.Car{}, errors.DB{Err: err}
 	}
@@ -85,10 +88,9 @@ func (c store) GetByID(id uuid.UUID) (models.Car, error) {
 	return car, nil
 }
 
-// Update executes command to update fields of car
-func (c store) Update(car models.Car) error {
-	_, err := c.db.Exec(updateCar, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID)
-
+// Update modifies car of the given id
+func (s store) Update(car models.Car) error {
+	_, err := s.db.Exec(updateCar, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID)
 	if err != nil {
 		return errors.DB{Err: err}
 	}
@@ -96,9 +98,9 @@ func (c store) Update(car models.Car) error {
 	return nil
 }
 
-// Delete executes command to delete engine
-func (c store) Delete(id uuid.UUID) error {
-	_, err := c.db.Exec(deleteCar, id.String())
+// Delete removes car with the given id
+func (s store) Delete(id uuid.UUID) error {
+	_, err := s.db.Exec(deleteCar, id.String())
 	if err != nil {
 		return errors.DB{Err: err}
 	}

@@ -37,27 +37,25 @@ func TestStore_Create(t *testing.T) {
 	}
 
 	car := models.Car{
-		ID:                id,
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              id,
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
 		Engine: models.Engine{
 			ID:           id,
 			Displacement: 100,
 			NCylinder:    2,
-			Range:        0,
 		},
 	}
 
 	queryErr := goError.New("query error")
 
 	mock.ExpectExec(insertCar).
-		WithArgs(car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID).
+		WithArgs(car.ID, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectExec(insertCar).
-		WithArgs(car.ID, car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID).
+		WithArgs(car.ID, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID).
 		WillReturnError(queryErr)
 
 	cases := []struct {
@@ -97,14 +95,12 @@ func TestStore_GetAll(t *testing.T) {
 
 	cars := []models.Car{
 		{
-			ID:                id,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
-			Engine: models.Engine{
-				ID: id,
-			},
+			ID:              id,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
+			Engine:          models.Engine{ID: id},
 		},
 	}
 
@@ -128,7 +124,7 @@ func TestStore_GetAll(t *testing.T) {
 	}{
 		{"success case", filters.Car{Brand: "BMW"}, cars, nil},
 		{"query error", filters.Car{}, nil, errors.DB{Err: queryError}},
-		{"scan error", filters.Car{}, cars, errors.DB{Err: errors.RowScan{}}},
+		{"scan error", filters.Car{}, cars, errors.DB{}},
 	}
 
 	for i, tc := range cases {
@@ -154,17 +150,11 @@ func TestStore_GetByID(t *testing.T) {
 	}
 
 	car := models.Car{
-		ID:                id,
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
-		Engine: models.Engine{
-			ID:           id,
-			Displacement: 0,
-			NCylinder:    0,
-			Range:        0,
-		},
+		ID:              id,
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		Engine:          models.Engine{ID: id},
 	}
 
 	queryErr := goError.New("query error")
@@ -210,19 +200,16 @@ func TestStore_Update(t *testing.T) {
 	updateFailed := goError.New("update failed")
 
 	car := models.Car{
-		ID:                id,
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
-		Engine: models.Engine{
-			ID: id,
-		},
+		ID:              id,
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		Engine:          models.Engine{ID: id},
 	}
 
-	mock.ExpectExec(updateCar).WithArgs(car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID).
+	mock.ExpectExec(updateCar).WithArgs(car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec(updateCar).WithArgs(car.Model, car.YearOfManufacture, car.Brand, car.FuelType, car.ID).
+	mock.ExpectExec(updateCar).WithArgs(car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID).
 		WillReturnError(updateFailed)
 
 	cases := []struct {

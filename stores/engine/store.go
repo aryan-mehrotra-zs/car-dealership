@@ -18,9 +18,9 @@ func New(db *sql.DB) stores.Engine {
 	return store{db: db}
 }
 
-// Create executes command in database to create engine entity
-func (e store) Create(engine models.Engine) (uuid.UUID, error) {
-	_, err := e.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
+// Create inserts a new engine in the database
+func (s store) Create(engine models.Engine) (uuid.UUID, error) {
+	_, err := s.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
 		return uuid.Nil, errors.DB{Err: err}
 	}
@@ -29,11 +29,11 @@ func (e store) Create(engine models.Engine) (uuid.UUID, error) {
 
 }
 
-// GetByID query the engine from database using id
-func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
+// GetByID fetches the engine from database of the given id
+func (s store) GetByID(id uuid.UUID) (models.Engine, error) {
 	var engine models.Engine
 
-	err := e.db.QueryRow(getEngine, id).
+	err := s.db.QueryRow(getEngine, id).
 		Scan(&engine.ID, &engine.Displacement, &engine.NCylinder, &engine.Range)
 	if err != nil {
 		return models.Engine{}, errors.DB{Err: err}
@@ -42,9 +42,9 @@ func (e store) GetByID(id uuid.UUID) (models.Engine, error) {
 	return engine, nil
 }
 
-// Update executes command to update fields of engine
-func (e store) Update(engine models.Engine) error {
-	_, err := e.db.Exec(updateEngine, engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
+// Update modifies engine of the given id
+func (s store) Update(engine models.Engine) error {
+	_, err := s.db.Exec(updateEngine, engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
 	if err != nil {
 		return errors.DB{Err: err}
 	}
@@ -52,9 +52,9 @@ func (e store) Update(engine models.Engine) error {
 	return nil
 }
 
-// Delete executes command to delete engine
-func (e store) Delete(id uuid.UUID) error {
-	_, err := e.db.Exec(deleteEngine, id.String())
+// Delete removes engine with the given id
+func (s store) Delete(id uuid.UUID) error {
+	_, err := s.db.Exec(deleteEngine, id.String())
 	if err != nil {
 		return errors.DB{Err: err}
 	}
