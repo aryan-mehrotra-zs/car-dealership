@@ -14,11 +14,11 @@ import (
 
 func TestService_Create(t *testing.T) {
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			ID:           uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 			Displacement: 100,
@@ -28,11 +28,11 @@ func TestService_Create(t *testing.T) {
 	}
 
 	car2 := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb3"),
-		Model:             "X",
-		YearOfManufacture: 0020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb3"),
+		Model:           "X",
+		ManufactureYear: 0020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -41,11 +41,11 @@ func TestService_Create(t *testing.T) {
 	}
 
 	car3 := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "Tesla",
-		FuelType:          1,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb5"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "Tesla",
+		FuelType:        1,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -82,11 +82,11 @@ func TestService_Create(t *testing.T) {
 func TestService_GetAll(t *testing.T) {
 	car := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
 			Engine: models.Engine{
 				ID:           uuid.Nil,
 				Displacement: 100,
@@ -98,12 +98,12 @@ func TestService_GetAll(t *testing.T) {
 
 	carWithoutEngine := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
-			Engine:            models.Engine{},
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
+			Engine:          models.Engine{},
 		},
 	}
 
@@ -134,11 +134,11 @@ func TestService_GetAll(t *testing.T) {
 
 func TestService_CarGetByID(t *testing.T) {
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			ID:           uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 			Displacement: 100,
@@ -174,11 +174,11 @@ func TestService_CarGetByID(t *testing.T) {
 
 func TestService_Update(t *testing.T) {
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -237,9 +237,12 @@ func TestService_Delete(t *testing.T) {
 }
 
 func Test_CheckCar(t *testing.T) {
-	invalidEngine := models.Car{Model: "A", YearOfManufacture: 2000, Brand: "tesla", FuelType: 3, Engine: models.Engine{Displacement: 200, NCylinder: 10, Range: 10}}
-	invalidEngine2 := models.Car{Model: "A", YearOfManufacture: 2000, Brand: "tesla", FuelType: 3, Engine: models.Engine{Displacement: -1, NCylinder: -1, Range: -1}}
-	invalidEngine3 := models.Car{Model: "A", YearOfManufacture: 2000, Brand: "tesla", FuelType: 3, Engine: models.Engine{Displacement: 0, NCylinder: 0, Range: 0}}
+	invalidEngine := models.Car{Model: "A", ManufactureYear: 2000, Brand: "tesla", FuelType: 3,
+		Engine: models.Engine{Displacement: 200, NCylinder: 10, Range: 10}}
+	invalidEngine2 := models.Car{Model: "A", ManufactureYear: 2000, Brand: "tesla", FuelType: 3,
+		Engine: models.Engine{Displacement: -1, NCylinder: -1, Range: -1}}
+	invalidEngine3 := models.Car{Model: "A", ManufactureYear: 2000, Brand: "tesla", FuelType: 3,
+		Engine: models.Engine{Displacement: 0, NCylinder: 0, Range: 0}}
 
 	cases := []struct {
 		desc  string
@@ -247,9 +250,9 @@ func Test_CheckCar(t *testing.T) {
 		err   error
 	}{
 		{"invalid model", models.Car{Model: ""}, errors.InvalidParam{}},
-		{"invalid year", models.Car{Model: "X", YearOfManufacture: 1800}, errors.InvalidParam{}},
-		{"invalid Brand", models.Car{Model: "Y", YearOfManufacture: 2000, Brand: "suzuki"}, errors.InvalidParam{}},
-		{"invalid Fuel", models.Car{Model: "Z", YearOfManufacture: 2000, Brand: "tesla", FuelType: 5}, errors.InvalidParam{}},
+		{"invalid year", models.Car{Model: "X", ManufactureYear: 1800}, errors.InvalidParam{}},
+		{"invalid Brand", models.Car{Model: "Y", ManufactureYear: 2000, Brand: "suzuki"}, errors.InvalidParam{}},
+		{"invalid Fuel", models.Car{Model: "Z", ManufactureYear: 2000, Brand: "tesla", FuelType: 5}, errors.InvalidParam{}},
 		{"invalid engine for petrol", invalidEngine, errors.InvalidParam{}},
 		{"invalid engine for ev", invalidEngine2, errors.InvalidParam{}},
 		{"invalid engine ", invalidEngine3, errors.InvalidParam{}},

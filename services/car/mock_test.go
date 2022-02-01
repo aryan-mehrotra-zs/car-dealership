@@ -28,11 +28,11 @@ func (c mockCar) Create(car models.Car) (uuid.UUID, error) {
 func (c mockCar) GetAll(filter filters.Car) ([]models.Car, error) {
 	car := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
 			Engine: models.Engine{
 				ID:           uuid.Nil,
 				Displacement: 100,
@@ -44,12 +44,12 @@ func (c mockCar) GetAll(filter filters.Car) ([]models.Car, error) {
 
 	carWithoutEngine := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
-			Engine:            models.Engine{},
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
+			Engine:          models.Engine{},
 		},
 	}
 
@@ -64,11 +64,11 @@ func (c mockCar) GetAll(filter filters.Car) ([]models.Car, error) {
 }
 func (c mockCar) GetByID(id uuid.UUID) (models.Car, error) {
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -104,7 +104,6 @@ func (c mockCar) Delete(id uuid.UUID) error {
 	default:
 		return nil
 	}
-
 }
 
 func (e mockEngine) Create(engine models.Engine) (uuid.UUID, error) {
@@ -135,8 +134,8 @@ func (e mockEngine) GetByID(id uuid.UUID) (models.Engine, error) {
 	default:
 		return models.Engine{}, nil
 	}
-
 }
+
 func (e mockEngine) Update(engine models.Engine) error {
 	switch engine.ID {
 	case uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"):
@@ -146,8 +145,8 @@ func (e mockEngine) Update(engine models.Engine) error {
 	default:
 		return nil
 	}
-
 }
+
 func (e mockEngine) Delete(id uuid.UUID) error {
 	switch id {
 	case uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"):
