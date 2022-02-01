@@ -26,7 +26,6 @@ func (s store) Create(engine models.Engine) (uuid.UUID, error) {
 	}
 
 	return engine.ID, nil
-
 }
 
 // GetByID fetches the engine from database of the given id
