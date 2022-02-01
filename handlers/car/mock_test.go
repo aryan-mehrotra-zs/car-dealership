@@ -22,17 +22,16 @@ func (m mockService) Create(car models.Car) (models.Car, error) {
 	default:
 		return models.Car{}, nil
 	}
-
 }
 
 func (m mockService) GetAll(filter filters.Car) ([]models.Car, error) {
 	withEngine := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
 			Engine: models.Engine{
 				ID:           uuid.Nil,
 				Displacement: 100,
@@ -44,12 +43,12 @@ func (m mockService) GetAll(filter filters.Car) ([]models.Car, error) {
 
 	withoutEngine := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
-			Engine:            models.Engine{},
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
+			Engine:          models.Engine{},
 		},
 	}
 
@@ -63,16 +62,15 @@ func (m mockService) GetAll(filter filters.Car) ([]models.Car, error) {
 	default:
 		return nil, nil
 	}
-
 }
 
 func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -91,17 +89,16 @@ func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
 		return models.Car{}, errors.DB{}
 	default:
 		return models.Car{}, errors.DB{}
-
 	}
 }
 
 func (m mockService) Update(car models.Car) (models.Car, error) {
 	car2 := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,

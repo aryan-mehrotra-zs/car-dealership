@@ -54,7 +54,6 @@ func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.service.GetAll(filter)
 	setStatusCode(w, err, r.Method, resp)
-
 }
 
 // GetByID writes the car based on ID of the car
@@ -149,6 +148,7 @@ func writeSuccessResponse(method string, w http.ResponseWriter, data interface{}
 
 			return
 		}
+
 		writeResponseBody(w, http.StatusOK, data)
 	case http.MethodGet:
 		writeResponseBody(w, http.StatusOK, data)

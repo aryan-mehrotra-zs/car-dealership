@@ -3,6 +3,7 @@ package car
 import (
 	"bytes"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -18,12 +19,12 @@ import (
 	"github.com/amehrotra/car-dealership/types"
 )
 
-func initializeTest(method string, body io.Reader, pathParams map[string]string, queryParams url.Values) (handler, *http.Request, *httptest.ResponseRecorder) {
+func initializeTest(method string, body io.Reader, pParam map[string]string, qParam url.Values) (handler, *http.Request, *httptest.ResponseRecorder) {
 	h := New(mockService{})
 
 	req := httptest.NewRequest(method, "http://car", body)
-	r := mux.SetURLVars(req, pathParams)
-	r.URL.RawQuery = queryParams.Encode()
+	r := mux.SetURLVars(req, pParam)
+	r.URL.RawQuery = qParam.Encode()
 
 	w := httptest.NewRecorder()
 
@@ -36,7 +37,7 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 		return nil, err
 	}
 
-	if err = resp.Body.Close(); err != nil {
+	if err := resp.Body.Close(); err != nil {
 		return nil, err
 	}
 
@@ -44,16 +45,19 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 }
 
 func TestHandler_Create(t *testing.T) {
-	res := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
-	res2 := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"y","yearOfManufacture":2020,"brand":"BMW","fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
-	res3 := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"z","yearOfManufacture":2020,"brand":"BMW","fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+	res := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":0,
+"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+	res2 := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"y","yearOfManufacture":2020,"brand":"BMW","fuelType":0,
+"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
+	res3 := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"z","yearOfManufacture":2020,"brand":"BMW","fuelType":0,
+"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
 
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -98,11 +102,11 @@ func TestHandler_Create(t *testing.T) {
 func TestHandler_GetAll(t *testing.T) {
 	withEngine := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
 			Engine: models.Engine{
 				ID:           uuid.Nil,
 				Displacement: 100,
@@ -114,12 +118,12 @@ func TestHandler_GetAll(t *testing.T) {
 
 	withoutEngine := []models.Car{
 		{
-			ID:                uuid.Nil,
-			Model:             "X",
-			YearOfManufacture: 2020,
-			Brand:             "BMW",
-			FuelType:          types.Petrol,
-			Engine:            models.Engine{},
+			ID:              uuid.Nil,
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
+			Engine:          models.Engine{},
 		},
 	}
 
@@ -157,11 +161,11 @@ func TestHandler_GetAll(t *testing.T) {
 
 func TestHandler_GetByID(t *testing.T) {
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -207,11 +211,11 @@ func TestHandler_Update(t *testing.T) {
 		,"fuelType":0,"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
 
 	car := models.Car{
-		ID:                uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:             "X",
-		YearOfManufacture: 2020,
-		Brand:             "BMW",
-		FuelType:          0,
+		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "BMW",
+		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -238,6 +242,7 @@ func TestHandler_Update(t *testing.T) {
 		h.Update(w, r)
 
 		resp := w.Result()
+		resp.Body.Close()
 
 		body, err := getResponseBody(resp)
 		if err != nil {
@@ -272,6 +277,10 @@ func TestHandler_Delete(t *testing.T) {
 		h.Delete(w, r)
 
 		resp := w.Result()
+
+		if err := resp.Body.Close(); err != nil {
+			log.Println("error in closing response body")
+		}
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
