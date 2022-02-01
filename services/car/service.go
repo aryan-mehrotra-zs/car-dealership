@@ -1,7 +1,6 @@
 package car
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -9,6 +8,7 @@ import (
 	"github.com/amehrotra/car-dealership/errors"
 	"github.com/amehrotra/car-dealership/filters"
 	"github.com/amehrotra/car-dealership/models"
+	"github.com/amehrotra/car-dealership/services"
 	"github.com/amehrotra/car-dealership/stores"
 )
 
@@ -17,13 +17,13 @@ type service struct {
 	car    stores.Car
 }
 
-func New(engine stores.Engine, car stores.Car) service {
+func New(engine stores.Engine, car stores.Car) services.Car {
 	return service{engine: engine, car: car}
 }
 
 // Create validates car information and sends data to store
-func (s service) Create(car models.Car) (models.Car, error) {
-	if err := checkCar(car); err != nil {
+func (s service) Create(car *models.Car) (models.Car, error) {
+	if err := checkCar(*car); err != nil {
 		return models.Car{}, err
 	}
 
@@ -47,17 +47,17 @@ func (s service) Create(car models.Car) (models.Car, error) {
 
 	car.Engine = engine
 
-	id, err = s.car.Create(car)
+	id, err = s.car.Create(*car)
 	if err != nil {
 		return models.Car{}, err
 	}
 
-	car, err = s.GetByID(id)
+	*car, err = s.GetByID(id)
 	if err != nil {
 		return models.Car{}, err
 	}
 
-	return car, nil
+	return *car, nil
 }
 
 // GetAll based on filter extracts data from store about cars
@@ -147,13 +147,13 @@ func (s service) Delete(id uuid.UUID) error {
 func checkCar(car models.Car) error {
 	switch {
 	case car.Model == "":
-		return errors.InvalidParam{Param: car.Model}
+		return errors.InvalidParam{Param: []string{"model"}}
 	case car.ManufactureYear < 1866 || car.ManufactureYear > 2022:
-		return errors.InvalidParam{Param: strconv.Itoa(car.ManufactureYear)}
+		return errors.InvalidParam{Param: []string{"yearOfManufacture"}}
 	case checkBrand(car.Brand) != nil:
-		return errors.InvalidParam{Param: car.Brand}
+		return errors.InvalidParam{Param: []string{"brand"}}
 	case car.FuelType < 0 || car.FuelType > 3:
-		return errors.InvalidParam{}
+		return errors.InvalidParam{Param: []string{"fuelType"}}
 	default:
 		return nil
 	}
@@ -161,16 +161,38 @@ func checkCar(car models.Car) error {
 
 // checkEngine validates engine configuration
 func checkEngine(engine models.Engine) error {
-	switch {
-	case engine.Displacement > 0 && engine.NCylinder > 0 && engine.Range > 0:
-		return errors.InvalidParam{Param: strconv.Itoa(engine.Displacement)}
-	case engine.Displacement < 0 && engine.NCylinder < 0 && engine.Range < 0:
-		return errors.InvalidParam{Param: strconv.Itoa(engine.Range)}
-	case engine.Displacement == 0 && engine.NCylinder == 0 && engine.Range == 0:
-		return errors.InvalidParam{Param: strconv.Itoa(engine.NCylinder)}
-	default:
-		return nil
+	equal := func(x int) bool {
+		return x == 0
 	}
+
+	greater := func(x int) bool {
+		return x > 0
+	}
+
+	if validate(engine, equal) || validate(engine, greater) {
+		return errors.InvalidParam{Param: []string{"displacement", "noOfCylinder", "range"}}
+	}
+
+	params := make([]string, 0)
+
+	switch {
+	case engine.Displacement < 0:
+		params = append(params, "displacement")
+	case engine.NCylinder < 0:
+		params = append(params, "noOfCylinder")
+	case engine.Range < 0:
+		params = append(params, "range")
+	}
+
+	if len(params) > 0 {
+		return errors.InvalidParam{Param: params}
+	}
+
+	return nil
+}
+
+func validate(e models.Engine, compare func(int) bool) bool {
+	return compare(e.Displacement) && compare(e.NCylinder) && compare(e.Range)
 }
 
 // checkBrand validates the brand name
