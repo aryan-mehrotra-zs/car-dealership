@@ -3,8 +3,8 @@ package car
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -25,170 +25,116 @@ func New(service services.Car) handler {
 
 // Create takes the clients request to create entity in database
 func (h handler) Create(w http.ResponseWriter, r *http.Request) {
-	var car models.Car
+	var car *models.Car
 
 	car, err := getCar(r)
 	if err != nil {
-		setStatusCode(w, err, r.Method, car)
+		setStatusCode(w, r.Method, car, err)
 
 		return
 	}
 
-	car, err = h.service.Create(&car)
-	setStatusCode(w, err, r.Method, car)
+	car, err = h.service.Create(car)
+	setStatusCode(w, r.Method, car, err)
 }
 
 // GetAll writes all the cars from the database based on the query parameter
 func (h handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	var engine bool
-	if query.Get("engine") == "true" {
-		engine = true
+	var hasEngine bool
+
+	param := strings.TrimSpace(query.Get("engine"))
+	if strings.EqualFold(param, "true") {
+		hasEngine = true
 	}
 
-	filter := filters.Car{
-		Brand:  query.Get("brand"),
-		Engine: engine,
-	}
+	brand := strings.TrimSpace(query.Get("brand"))
+
+	filter := filters.Car{Brand: brand, Engine: hasEngine}
 
 	resp, err := h.service.GetAll(filter)
-	setStatusCode(w, err, r.Method, resp)
+	setStatusCode(w, r.Method, resp, err)
 }
 
-// GetByID writes the car based on ID of the car
+// GetByID writes the response based on ID of the resp
 func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := getID(r)
 	if err != nil {
-		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
-	var car models.Car
-
-	car, err = h.service.GetByID(id)
-
-	setStatusCode(w, err, r.Method, car)
+	car, err := h.service.GetByID(id)
+	setStatusCode(w, r.Method, car, err)
 }
 
-// Update writes the updated car entity in the database
+// Update writes the updated resp entity in the database
 func (h handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := getID(r)
 	if err != nil {
-		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
-	var car models.Car
+	car, err := getCar(r)
+	if err != nil {
+		setStatusCode(w, r.Method, car, err)
+
+		return
+	}
+
 	car.ID = id
 
-	car, err = getCar(r)
-	if err != nil {
-		setStatusCode(w, err, r.Method, car)
-
-		return
-	}
-
 	car, err = h.service.Update(car)
-	setStatusCode(w, err, r.Method, car)
+	setStatusCode(w, r.Method, car, err)
 }
 
-// Delete removes the car from database based on ID
+// Delete removes the resp from database based on ID
 func (h handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := getID(r)
 	if err != nil {
-		setStatusCode(w, errors.InvalidParam{}, r.Method, nil)
+		setStatusCode(w, r.Method, nil, err)
 
 		return
 	}
 
 	err = h.service.Delete(id)
-	setStatusCode(w, err, r.Method, nil)
+	setStatusCode(w, r.Method, nil, err)
 }
 
-// getCar return the car by reading and unmarshal the body
-func getCar(r *http.Request) (models.Car, error) {
+// getID reads the id from path parameter of url
+func getID(r *http.Request) (uuid.UUID, error) {
+	param := mux.Vars(r)
+	idParam := strings.TrimSpace(param["id"])
+
+	if idParam == "" {
+		return uuid.Nil, errors.MissingParam{Param: "id"}
+	}
+
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return uuid.Nil, errors.InvalidParam{Param: []string{"id"}}
+	}
+
+	return id, nil
+}
+
+// getCar reads request body and returns car
+func getCar(r *http.Request) (*models.Car, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	var car models.Car
 
 	err = json.Unmarshal(body, &car)
 	if err != nil {
-		return models.Car{}, err
+		return nil, errors.InvalidParam{Param: []string{"body"}}
 	}
 
-	return car, nil
-}
-
-// setStatusCode writes the status code based on the error type
-func setStatusCode(w http.ResponseWriter, err error, method string, data interface{}) {
-	switch err.(type) {
-	case errors.EntityAlreadyExists:
-		w.WriteHeader(http.StatusOK)
-	case errors.MissingParam, errors.InvalidParam:
-		w.WriteHeader(http.StatusBadRequest)
-	case nil:
-		writeSuccessResponse(method, w, data)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-
-// writeSuccessResponse based on the method type it calls function writeResponseBody
-func writeSuccessResponse(method string, w http.ResponseWriter, data interface{}) {
-	switch method {
-	case http.MethodPost:
-		if data != nil {
-			writeResponseBody(w, http.StatusCreated, data)
-
-			return
-		}
-
-		writeResponseBody(w, http.StatusOK, data)
-	case http.MethodGet:
-		writeResponseBody(w, http.StatusOK, data)
-	case http.MethodPut:
-		writeResponseBody(w, http.StatusOK, data)
-	case http.MethodDelete:
-		writeResponseBody(w, http.StatusNoContent, data)
-	}
-}
-
-// writeResponseBody marshals the data and writes the body which is sent to client
-func writeResponseBody(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-
-	resp, err := json.Marshal(data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		return
-	}
-
-	w.WriteHeader(statusCode)
-
-	_, err = w.Write(resp)
-	if err != nil {
-		log.Println("error in writing response")
-
-		return
-	}
-}
-
-// getID reads the id from path parameter of url
-func getID(r *http.Request) (uuid.UUID, error) {
-	param := mux.Vars(r)
-	idParam := param["id"]
-
-	id, err := uuid.Parse(idParam)
-	if err != nil {
-		return uuid.Nil, errors.InvalidParam{}
-	}
-
-	return id, nil
+	return &car, nil
 }

@@ -11,10 +11,10 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Create(car models.Car) (models.Car, error) {
+func (m mockService) Create(car *models.Car) (models.Car, error) {
 	switch car.Model {
 	case "x":
-		return car, nil
+		return *car, nil
 	case "y":
 		return models.Car{}, errors.EntityAlreadyExists{}
 	case "z":
@@ -92,7 +92,7 @@ func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
 	}
 }
 
-func (m mockService) Update(car models.Car) (models.Car, error) {
+func (m mockService) Update(car *models.Car) (models.Car, error) {
 	car2 := models.Car{
 		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 		Model:           "X",
