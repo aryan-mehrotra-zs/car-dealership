@@ -67,7 +67,7 @@ func TestService_Create(t *testing.T) {
 	s := New(mockEngine{}, mockCar{})
 
 	for i, tc := range cases {
-		resp, err := s.Create(tc.input)
+		resp, err := s.Create(&tc.input)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
@@ -252,7 +252,7 @@ func Test_CheckCar(t *testing.T) {
 		{"invalid model", models.Car{Model: ""}, errors.InvalidParam{}},
 		{"invalid year", models.Car{Model: "X", ManufactureYear: 1800}, errors.InvalidParam{}},
 		{"invalid Brand", models.Car{Model: "Y", ManufactureYear: 2000, Brand: "suzuki"}, errors.InvalidParam{}},
-		{"invalid Fuel", models.Car{Model: "Z", ManufactureYear: 2000, Brand: "tesla", FuelType: 5}, errors.InvalidParam{}},
+		{"invalid fuel", models.Car{Model: "Z", ManufactureYear: 2000, Brand: "tesla", FuelType: 5}, errors.InvalidParam{}},
 		{"invalid engine for petrol", invalidEngine, errors.InvalidParam{}},
 		{"invalid engine for ev", invalidEngine2, errors.InvalidParam{}},
 		{"invalid engine ", invalidEngine3, errors.InvalidParam{}},

@@ -13,7 +13,7 @@ type mockCar struct{}
 
 type mockEngine struct{}
 
-func (c mockCar) Create(car models.Car) (uuid.UUID, error) {
+func (c mockCar) Create(car *models.Car) (uuid.UUID, error) {
 	switch car.ID {
 	case uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"):
 		return car.ID, nil
@@ -85,7 +85,7 @@ func (c mockCar) GetByID(id uuid.UUID) (models.Car, error) {
 		return models.Car{}, nil
 	}
 }
-func (c mockCar) Update(car models.Car) error {
+func (c mockCar) Update(car *models.Car) error {
 	switch car.ID {
 	case uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"):
 		return nil

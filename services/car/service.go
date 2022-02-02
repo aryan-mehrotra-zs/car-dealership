@@ -22,42 +22,42 @@ func New(engine stores.Engine, car stores.Car) services.Car {
 }
 
 // Create validates car information and sends data to store
-func (s service) Create(car *models.Car) (models.Car, error) {
+func (s service) Create(car *models.Car) (*models.Car, error) {
 	if err := checkCar(*car); err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	if err := checkEngine(car.Engine); err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	id := uuid.New()
 	car.ID = id
 	car.Engine.ID = id
 
-	id, err := s.engine.Create(car.Engine)
+	id, err := s.engine.Create(&car.Engine)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	engine, err := s.engine.GetByID(id)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	car.Engine = engine
 
-	id, err = s.car.Create(*car)
+	id, err = s.car.Create(car)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
-	*car, err = s.GetByID(id)
+	car, err = s.GetByID(id)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
-	return *car, nil
+	return car, nil
 }
 
 // GetAll based on filter extracts data from store about cars
@@ -92,37 +92,37 @@ func (s service) GetAll(filter filters.Car) ([]models.Car, error) {
 }
 
 // GetByID based on ID provided extracts data from store about car
-func (s service) GetByID(id uuid.UUID) (models.Car, error) {
+func (s service) GetByID(id uuid.UUID) (*models.Car, error) {
 	car, err := s.car.GetByID(id)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	engine, err := s.engine.GetByID(id)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	car.Engine = engine
 
-	return car, nil
+	return &car, nil
 }
 
 // Update updates the engine followed by car
-func (s service) Update(car models.Car) (models.Car, error) {
-	err := s.engine.Update(car.Engine)
+func (s service) Update(car *models.Car) (*models.Car, error) {
+	err := s.engine.Update(&car.Engine)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
-	err = checkCar(car)
+	err = checkCar(*car)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	err = s.car.Update(car)
 	if err != nil {
-		return models.Car{}, err
+		return nil, err
 	}
 
 	return car, nil
