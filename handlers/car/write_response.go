@@ -15,6 +15,8 @@ func setStatusCode(w http.ResponseWriter, method string, data interface{}, err e
 		w.WriteHeader(http.StatusOK)
 	case errors.MissingParam, errors.InvalidParam:
 		w.WriteHeader(http.StatusBadRequest)
+	case errors.EntityNotFound:
+		w.WriteHeader(http.StatusNotFound)
 	case nil:
 		writeSuccessResponse(method, w, data)
 	default:
