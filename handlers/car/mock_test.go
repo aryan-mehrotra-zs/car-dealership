@@ -70,7 +70,6 @@ func (m mockService) GetByID(id uuid.UUID) (models.Car, error) {
 		Model:           "X",
 		ManufactureYear: 2020,
 		Brand:           "BMW",
-		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
@@ -98,11 +97,9 @@ func (m mockService) Update(car *models.Car) (models.Car, error) {
 		Model:           "X",
 		ManufactureYear: 2020,
 		Brand:           "BMW",
-		FuelType:        0,
 		Engine: models.Engine{
 			Displacement: 100,
 			NCylinder:    2,
-			Range:        0,
 		},
 	}
 
