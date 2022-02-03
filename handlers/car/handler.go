@@ -126,7 +126,7 @@ func getID(r *http.Request) (uuid.UUID, error) {
 func getCar(r *http.Request) (*models.Car, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.BindError{}
 	}
 
 	var car models.Car
