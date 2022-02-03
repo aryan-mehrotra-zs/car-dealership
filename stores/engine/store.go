@@ -19,7 +19,7 @@ func New(db *sql.DB) stores.Engine {
 }
 
 // Create inserts a new engine in the database
-func (s store) Create(engine models.Engine) (uuid.UUID, error) {
+func (s store) Create(engine *models.Engine) (uuid.UUID, error) {
 	_, err := s.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
 		return uuid.Nil, errors.DB{Err: err}
@@ -42,7 +42,7 @@ func (s store) GetByID(id uuid.UUID) (models.Engine, error) {
 }
 
 // Update modifies engine of the given id
-func (s store) Update(engine models.Engine) error {
+func (s store) Update(engine *models.Engine) error {
 	_, err := s.db.Exec(updateEngine, engine.Displacement, engine.NCylinder, engine.Range, engine.ID.String())
 	if err != nil {
 		return errors.DB{Err: err}

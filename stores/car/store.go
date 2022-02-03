@@ -21,7 +21,7 @@ func New(db *sql.DB) stores.Car {
 }
 
 // Create inserts a new car in the database
-func (s store) Create(car models.Car) (uuid.UUID, error) {
+func (s store) Create(car *models.Car) (uuid.UUID, error) {
 	_, err := s.db.Exec(insertCar, car.ID, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID)
 	if err != nil {
 		return uuid.Nil, errors.DB{Err: err}
@@ -89,7 +89,7 @@ func (s store) GetByID(id uuid.UUID) (models.Car, error) {
 }
 
 // Update modifies car of the given id
-func (s store) Update(car models.Car) error {
+func (s store) Update(car *models.Car) error {
 	_, err := s.db.Exec(updateCar, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID)
 	if err != nil {
 		return errors.DB{Err: err}
