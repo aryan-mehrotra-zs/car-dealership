@@ -3,7 +3,6 @@ package car
 import (
 	"bytes"
 	"encoding/json"
-	goErr "errors"
 	"io"
 	"log"
 	"net/http"
@@ -26,7 +25,6 @@ import (
 
 func initializeTest(t *testing.T, method string, body io.Reader, pParam map[string]string, qParam url.Values) (handler, *services.MockCar,
 	*http.Request, *httptest.ResponseRecorder) {
-
 	ctrl := gomock.NewController(t)
 
 	mockService := services.NewMockCar(ctrl)
@@ -54,6 +52,19 @@ func getResponseBody(resp *http.Response) ([]byte, error) {
 	return body, nil
 }
 
+func getOutput(t *testing.T, respBody []byte) *models.Car {
+	var output *models.Car
+
+	if len(respBody) != 0 {
+		output = &models.Car{}
+		if err := json.Unmarshal(respBody, output); err != nil {
+			t.Error(err)
+		}
+	}
+
+	return output
+}
+
 func TestHandler_Create(t *testing.T) {
 	var (
 		body = []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
@@ -71,19 +82,19 @@ func TestHandler_Create(t *testing.T) {
 
 	cases := []struct {
 		desc       string
-		body       []byte
+		body       io.Reader
 		mockOutput *models.Car
 		mockErr    error
 		resp       *models.Car
 		statusCode int
 	}{
-		{"success case", body, &car, nil, &car, http.StatusCreated},
-		{"entity already exists", body, nil, errors.EntityAlreadyExists{}, nil, http.StatusOK},
-		{"database error", body, nil, errors.DB{Err: goErr.New("db error")}, nil, http.StatusInternalServerError},
+		{"success case", bytes.NewReader(body), &car, nil, &car, http.StatusCreated},
+		{"entity already exists", bytes.NewReader(body), nil, errors.EntityAlreadyExists{}, nil, http.StatusOK},
+		{"invalid body", mockReader{}, nil, errors.InvalidParam{}, nil, http.StatusBadRequest},
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodPost, bytes.NewReader(tc.body), nil, nil)
+		h, mockService, r, w := initializeTest(t, http.MethodPost, tc.body, nil, nil)
 
 		mockService.EXPECT().Create(&car).Return(tc.mockOutput, tc.mockErr)
 
@@ -106,29 +117,25 @@ func TestHandler_Create(t *testing.T) {
 	}
 }
 
-//
-//func TestHandler_getCarUnmarshalError(t *testing.T) {
-//	invalidBody := []byte(`invalid body`)
-//
-//	_, _, r, _ := initializeTest(t, http.MethodPost, bytes.NewReader(invalidBody), nil, nil)
-//
-//	h.Create(w, r)
-//
-//	resp := w.Result()
-//
-//	body, err := getResponseBody(resp)
-//	if err != nil {
-//		t.Errorf("error in reading body")
-//	}
-//
-//	if resp.StatusCode != http.StatusBadRequest {
-//		t.Errorf("\n[TEST] Failed. Desc : unmarshal error\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
-//	}
-//
-//	if body != nil {
-//		t.Errorf("\n[TEST] Failed. Desc : unmarshal error\nGot %v\nExpected nil", string(body))
-//	}
-//}
+func Test_CreateInvalidBody(t *testing.T) {
+	h, _, r, w := initializeTest(t, http.MethodPost, mockReader{}, nil, nil)
+	h.Create(w, r)
+
+	resp := w.Result()
+
+	body, err := getResponseBody(resp)
+	if err != nil {
+		t.Errorf("error in reading body")
+	}
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
+	}
+
+	if reflect.DeepEqual(body, resp.Body) {
+		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", string(body), resp.Body)
+	}
+}
 
 func TestHandler_GetAll(t *testing.T) {
 	withEngine := []models.Car{
@@ -213,8 +220,10 @@ func TestHandler_GetByID(t *testing.T) {
 		expErr     error
 		statusCode int
 	}{
-		{"request successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), car, nil, http.StatusOK},
-		{"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), models.Car{}, errors.EntityAlreadyExists{}, http.StatusOK},
+		{"request successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), car, nil,
+			http.StatusOK},
+		{"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), models.Car{},
+			errors.EntityAlreadyExists{}, http.StatusOK},
 	}
 
 	for i, tc := range cases {
@@ -268,7 +277,8 @@ func TestHandler_Update(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodPut, bytes.NewReader(body), map[string]string{"id": "8f443772-132b-4ae5-9f8f-9960649b3fb4"}, nil)
+		h, mockService, r, w := initializeTest(t, http.MethodPut, bytes.NewReader(body),
+			map[string]string{"id": "8f443772-132b-4ae5-9f8f-9960649b3fb4"}, nil)
 
 		mockService.EXPECT().Update(&car).Return(tc.resp, tc.mockErr)
 
@@ -281,14 +291,7 @@ func TestHandler_Update(t *testing.T) {
 			t.Errorf("error in reading body")
 		}
 
-		var output *models.Car
-
-		if len(respBody) != 0 {
-			output = &models.Car{}
-			if err = json.Unmarshal(respBody, output); err != nil {
-				t.Error(err)
-			}
-		}
+		output := getOutput(t, respBody)
 
 		if tc.statusCode != resp.StatusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
@@ -338,16 +341,54 @@ func (m mockReader) Read(p []byte) (n int, err error) {
 }
 
 func Test_getCar(t *testing.T) {
-	_, _, r, _ := initializeTest(t, "", mockReader{}, nil, nil)
+	cases := []struct {
+		desc   string
+		body   io.Reader
+		output *models.Car
+		err    error
+	}{
+		{"bind error", mockReader{}, nil, errors.InvalidParam{Param: []string{"body"}}},
+		{"unmarshal error", bytes.NewReader([]byte("invalid body")), nil, errors.InvalidParam{Param: []string{"body"}}},
+	}
 
-	_, err := getCar(r)
+	for i, tc := range cases {
+		_, _, r, _ := initializeTest(t, "", tc.body, nil, nil)
 
-	if err == nil {
-		t.Errorf("\n[TEST] Failed. Desc invalid body: \nGot %v\nExpected %v", err, errors.BindError{})
+		output, err := getCar(r)
+
+		if !reflect.DeepEqual(err, tc.err) {
+			t.Errorf("\n[TEST %v] Failed. Desc %v: \nGot %v\nExpected %v", i, tc.desc, err, tc.err)
+		}
+
+		if output != tc.output {
+			t.Errorf("\n[TEST %v] Failed. Desc %v: \nGot %v\nExpected %v", i, tc.desc, output, tc.output)
+		}
 	}
 }
 
-//
-//func Test_getID(t *testing.T) {
-//	_, _, r, _ := initializeTest(t, "", mockReader{}, map[string]string{"id": ""), nil)
-//}
+func Test_getID(t *testing.T) {
+	cases := []struct {
+		desc   string
+		id     string
+		output uuid.UUID
+		err    error
+	}{
+		{"id parsed success", "8f443772-132b-4ae5-9f8f-9960649b3fb4", uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"), nil},
+		{"empty string", "", uuid.Nil, errors.MissingParam{Param: "id"}},
+		{"invalid id", "12223", uuid.Nil, errors.InvalidParam{Param: []string{"id"}}},
+	}
+
+	for i, tc := range cases {
+		_, _, r, _ := initializeTest(t, "", nil, map[string]string{"id": tc.id}, nil)
+
+		output, err := getID(r)
+
+		if !reflect.DeepEqual(err, tc.err) {
+			t.Errorf("\n[TEST %v] Failed. Desc %v: \nGot %v\nExpected %v", i, tc.desc, err, tc.err)
+		}
+
+		if output != tc.output {
+			t.Errorf("\n[TEST %v] Failed. Desc %v: \nGot %v\nExpected %v", i, tc.desc, output, tc.output)
+		}
+	}
+}
