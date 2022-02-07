@@ -2,7 +2,7 @@ package car
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -127,7 +127,7 @@ func getID(r *http.Request) (uuid.UUID, error) {
 
 // getCar reads request body and returns car
 func getCar(r *http.Request) (*models.Car, error) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, errors.InvalidParam{Param: []string{"body"}}
 	}
