@@ -51,5 +51,5 @@ func main() {
 	}
 
 	// start server
-	log.Fatal(srv.ListenAndServe())
+	log.Println(srv.ListenAndServe())
 }
