@@ -11,7 +11,7 @@ import (
 type Fuel int
 
 const (
-	Diesel Fuel = iota + 1
+	Diesel Fuel = iota
 	Petrol
 	Electric
 )
@@ -41,7 +41,7 @@ func (f *Fuel) UnmarshalJSON(b []byte) error {
 	switch strings.ToLower(s) {
 	case "petrol":
 		*f = Petrol
-	case "diesel:":
+	case "diesel":
 		*f = Diesel
 	case "electric":
 		*f = Electric
@@ -53,20 +53,33 @@ func (f *Fuel) UnmarshalJSON(b []byte) error {
 }
 
 func (f Fuel) Value() (driver.Value, error) {
-	return int64(f), nil
+	switch f {
+	case Diesel:
+		return "diesel", nil
+	case Petrol:
+		return "petrol", nil
+	case Electric:
+		return "electric", nil
+	}
+
+	return nil, errors.InvalidParam{Param: []string{"fuelType"}}
 }
 
 func (f *Fuel) Scan(value interface{}) error {
-	switch value {
-	case "petrol":
-		*f = Fuel(1)
-		return nil
+	fuel, ok := value.([]byte)
+	if !ok {
+		return errors.InvalidParam{Param: []string{"fuelType"}}
+	}
+
+	switch string(fuel) {
 	case "diesel":
-		*f = Fuel(2)
-		return nil
-	case "ev":
-		*f = Fuel(3)
-		return nil
+		*f = Diesel
+	case "petrol":
+		*f = Petrol
+	case "electric":
+		*f = Electric
+	default:
+		return errors.InvalidParam{Param: []string{"fuelType"}}
 	}
 
 	return nil
