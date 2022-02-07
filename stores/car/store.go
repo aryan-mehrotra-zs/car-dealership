@@ -21,13 +21,13 @@ func New(db *sql.DB) stores.Car {
 }
 
 // Create inserts a new car in the database
-func (s store) Create(car *models.Car) (uuid.UUID, error) {
+func (s store) Create(car *models.Car) error {
 	_, err := s.db.Exec(insertCar, car.ID, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID)
 	if err != nil {
-		return uuid.Nil, errors.DB{Err: err}
+		return errors.DB{Err: err}
 	}
 
-	return car.ID, nil
+	return nil
 }
 
 // GetAll fetches cars based on filter

@@ -19,13 +19,13 @@ func New(db *sql.DB) stores.Engine {
 }
 
 // Create inserts a new engine in the database
-func (s store) Create(engine *models.Engine) (uuid.UUID, error) {
+func (s store) Create(engine *models.Engine) error {
 	_, err := s.db.Exec(insertEngine, engine.ID, engine.Displacement, engine.NCylinder, engine.Range)
 	if err != nil {
-		return uuid.Nil, errors.DB{Err: err}
+		return errors.DB{Err: err}
 	}
 
-	return engine.ID, nil
+	return nil
 }
 
 // GetByID fetches the engine from database of the given id

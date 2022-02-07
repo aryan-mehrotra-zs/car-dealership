@@ -68,11 +68,7 @@ func TestStore_Create(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		id, err := s.Create(&car)
-
-		if id != tc.id {
-			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, id, tc.id)
-		}
+		err := s.Create(&car)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
