@@ -34,20 +34,12 @@ func (s service) Create(car *models.Car) (*models.Car, error) {
 	id := uuid.New()
 	car.ID = id
 	car.Engine.ID = id
-
-	id, err := s.engine.Create(&car.Engine)
+	err := s.engine.Create(&car.Engine)
 	if err != nil {
 		return nil, err
 	}
 
-	engine, err := s.engine.GetByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	car.Engine = engine
-
-	id, err = s.car.Create(car)
+	err = s.car.Create(car)
 	if err != nil {
 		return nil, err
 	}
