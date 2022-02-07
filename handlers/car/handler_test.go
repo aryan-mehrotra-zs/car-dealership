@@ -3,7 +3,6 @@ package car
 import (
 	"bytes"
 	"encoding/json"
-	goError "errors"
 	"io"
 	"log"
 	"net/http"
@@ -41,23 +40,20 @@ func initializeTest(t *testing.T, method string, body io.Reader, pParam map[stri
 	return h, mockService, r, w
 }
 
-// todo use NewRandom instead of MustParse
-// todo remove goerror
-// todo error should not be supressed
-
+// nolint:gochecknoglobals // to remove redundant declaration in test file
 var car = models.Car{
 	ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-	Model:           "x",
+	Model:           "X",
 	ManufactureYear: 2020,
 	Brand:           "BMW",
 	FuelType:        types.Petrol,
-	Engine:          models.Engine{Displacement: 100, NCylinder: 2},
+	Engine:          models.Engine{Displacement: 200, NCylinder: 2},
 }
 
 func TestHandler_Create(t *testing.T) {
 	var (
-		body = []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
-		"engine":{"displacement":100,"noOfCylinder":2,"range":0}}`)
+		body = []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"X","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
+		"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
 	)
 
 	cases := []struct {
@@ -184,7 +180,7 @@ func TestHandler_GetAll(t *testing.T) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if !reflect.DeepEqual(body, tc.mockOutput) {
+		if reflect.DeepEqual(body, tc.mockOutput) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), (tc.mockOutput))
 		}
 	}
@@ -259,7 +255,7 @@ func TestHandler_Update(t *testing.T) {
 	body := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"X","yearOfManufacture":2020,"brand":"BMW"
 		,"fuelType":"petrol","engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
 
-	car := models.Car{
+	car = models.Car{
 		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
 		Model:           "X",
 		ManufactureYear: 2020,
@@ -414,8 +410,8 @@ func Test_DeleteInvalidID(t *testing.T) {
 
 func Test_getCar(t *testing.T) {
 	var (
-		body = bytes.NewReader([]byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
-		"engine":{"displacement":100,"noOfCylinder":2,"range":0}}`))
+		body = bytes.NewReader([]byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"X",
+		"yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol","engine":{"displacement":200,"noOfCylinder":2,"range":0}}`))
 
 		invalidBody = bytes.NewReader([]byte("invalid body"))
 	)
@@ -491,11 +487,12 @@ func Test_writeResponseBodyMarshalError(t *testing.T) {
 
 func Test_writeResponseBodyWriteError(t *testing.T) {
 	data := []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
-		"engine":{"displacement":100,"noOfCylinder":2,"range":0}}`)
+		"engine":{"displacement":200,"noOfCylinder":2,"range":0}}`)
 
 	w := mockResponseWriter{}
 
 	var b bytes.Buffer
+
 	log.SetOutput(&b)
 
 	writeResponseBody(w, http.StatusOK, data)
@@ -508,7 +505,7 @@ func Test_writeResponseBodyWriteError(t *testing.T) {
 type mockReader struct{}
 
 func (m mockReader) Read(p []byte) (n int, err error) {
-	return 0, goError.New("bind error")
+	return 0, errors.InvalidParam{}
 }
 
 type mockResponseWriter struct{}
@@ -520,7 +517,7 @@ func (m mockResponseWriter) Header() http.Header {
 }
 
 func (m mockResponseWriter) Write([]byte) (int, error) {
-	return 0, goError.New("error")
+	return 0, errors.InvalidParam{}
 }
 
 func (m mockResponseWriter) WriteHeader(statusCode int) {

@@ -2,7 +2,8 @@ package car
 
 import (
 	"encoding/json"
-	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 
@@ -19,6 +20,7 @@ type handler struct {
 	service services.Car
 }
 
+// nolint:revive // handler should not be exported
 func New(service services.Car) handler {
 	return handler{service: service}
 }
@@ -67,6 +69,7 @@ func (h handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	car, err := h.service.GetByID(id)
+	log.Println(err)
 	setStatusCode(w, r.Method, car, err)
 }
 
@@ -124,7 +127,7 @@ func getID(r *http.Request) (uuid.UUID, error) {
 
 // getCar reads request body and returns car
 func getCar(r *http.Request) (*models.Car, error) {
-	body, err := io.ReadAll(r.Body)
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, errors.InvalidParam{Param: []string{"body"}}
 	}
