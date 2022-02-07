@@ -23,7 +23,7 @@ func New(engine stores.Engine, car stores.Car) services.Car {
 
 // Create validates car information and sends data to store
 func (s service) Create(car *models.Car) (*models.Car, error) {
-	if err := checkCar(*car); err != nil {
+	if err := checkCar(car); err != nil {
 		return nil, err
 	}
 
@@ -115,7 +115,7 @@ func (s service) Update(car *models.Car) (*models.Car, error) {
 		return nil, err
 	}
 
-	err = checkCar(*car)
+	err = checkCar(car)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (s service) Delete(id uuid.UUID) error {
 }
 
 // checkCar validates the all parameters of the car
-func checkCar(car models.Car) error {
+func checkCar(car *models.Car) error {
 	switch {
 	case car.Model == "":
 		return errors.InvalidParam{Param: []string{"model"}}
