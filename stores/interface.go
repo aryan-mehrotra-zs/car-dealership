@@ -8,7 +8,7 @@ import (
 )
 
 type Car interface {
-	Create(car *models.Car) (uuid.UUID, error)
+	Create(car *models.Car) error
 	GetAll(filter filters.Car) ([]models.Car, error)
 	GetByID(id uuid.UUID) (models.Car, error)
 	Update(car *models.Car) error
@@ -16,7 +16,7 @@ type Car interface {
 }
 
 type Engine interface {
-	Create(engine *models.Engine) (uuid.UUID, error)
+	Create(engine *models.Engine) error
 	GetByID(id uuid.UUID) (models.Engine, error)
 	Update(engine *models.Engine) error
 	Delete(id uuid.UUID) error
