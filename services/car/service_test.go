@@ -26,11 +26,13 @@ func initializeTest(t *testing.T) (services.Car, *stores.MockCar, *stores.MockEn
 	return service, mockCar, mockEngine
 }
 
+//nolint
 var engine = models.Engine{
 	Displacement: 100,
 	NCylinder:    2,
 }
 
+// nolint:gochecknoglobals // to remove redundant declaration in test file
 var car = models.Car{
 	Model:           "X",
 	ManufactureYear: 2020,
@@ -38,65 +40,180 @@ var car = models.Car{
 	Engine:          engine,
 }
 
-//func TestService_Create(t *testing.T) {
-//	id, err := uuid.NewRandom()
-//	if err != nil {
-//		t.Errorf("error in creating id : %v", err)
-//	}
-//
-//	car.ID = id
-//	engine.ID = id
-//
-//	cases := []struct {
-//		desc       string
-//		mockCar    *models.Car
-//		mockEngine *models.Engine
-//		resp       *models.Car
-//		err        error
-//	}{
-//		{"create successful", &car, &engine, &car, nil},
-//		//{"invalid parameter", car2, models.Car{}, errors.InvalidParam{}},
-//		//{"missing parameter", car3, models.Car{}, errors.MissingParam{}},
-//	}
-//
-//	for i, tc := range cases {
-//		s, mockCar, mockEngine := initializeTest(t)
-//
-//		mockEngine.EXPECT().Create(tc.mockEngine).Return(tc.mockEngine.ID, tc.err)
-//		mockEngine.EXPECT().GetByID(tc.mockEngine.ID).Return(*tc.mockEngine, tc.err)
-//
-//		mockCar.EXPECT().Create(tc.mockCar).Return(tc.mockCar.ID, tc.err)
-//
-//		resp, err := s.Create(tc.mockCar)
-//
-//		if err != tc.err {
-//			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
-//		}
-//
-//		if tc.resp != resp {
-//			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, resp, tc.resp)
-//		}
-//	}
-//}
+func TestService_Create(t *testing.T) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		t.Errorf("error in creating id : %v", err)
+	}
 
-func TestService_GetAll(t *testing.T) {
-	car := []models.Car{
+	car.ID = id
+	engine.ID = id
+
+	s, mockCar, mockEngine := initializeTest(t)
+
+	mockEngine.EXPECT().Create(gomock.Any()).Return(nil)
+	mockCar.EXPECT().Create(gomock.Any()).Return(nil)
+	mockCar.EXPECT().GetByID(gomock.Any()).Return(car, nil)
+	mockEngine.EXPECT().GetByID(gomock.Any()).Return(engine, nil)
+
+	resp, err := s.Create(&car)
+
+	resp.ID = id
+	resp.Engine.ID = id
+
+	if err != nil {
+		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", err, nil)
+	}
+
+	if !reflect.DeepEqual(resp, &car) {
+		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", resp, &car)
+	}
+}
+
+func TestService_CreateInvalidCar(t *testing.T) {
+	s, _, _ := initializeTest(t)
+
+	resp, err := s.Create(&models.Car{})
+
+	if !reflect.DeepEqual(err, errors.InvalidParam{Param: []string{"model"}}) {
+		t.Errorf("\n[TEST] Failed \nDesc invalid car model\nGot %v\n Expected %v", err, errors.InvalidParam{})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc invalid car model\nGot %v\n Expected %v", resp, nil)
+	}
+}
+
+func TestService_CreateInvalidEngine(t *testing.T) {
+	car := models.Car{
+		ID:              uuid.Nil,
+		Model:           "X",
+		ManufactureYear: 2021,
+		Brand:           "BMW",
+		FuelType:        types.Petrol,
+		Engine:          models.Engine{Displacement: 0, Range: 00, NCylinder: -11},
+	}
+
+	s, _, _ := initializeTest(t)
+
+	resp, err := s.Create(&car)
+
+	if !reflect.DeepEqual(err, errors.InvalidParam{Param: []string{"noOfCylinder"}}) {
+		t.Errorf("\n[TEST] Failed \nDesc invalid engine parameter\nGot %v\n Expected %v", err, errors.InvalidParam{Param: []string{"noOfCylinder"}})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc invalid engine parameter\nGot %v\n Expected %v", resp, nil)
+	}
+}
+
+func TestService_CreateEngineDBError(t *testing.T) {
+	s, _, mockEngine := initializeTest(t)
+
+	mockEngine.EXPECT().Create(gomock.Any()).Return(errors.DB{})
+
+	resp, err := s.Create(&car)
+
+	if !reflect.DeepEqual(err, errors.DB{}) {
+		t.Errorf("\n[TEST] Failed \nDesc db error when creating engine\nGot %v\n Expected %v", err, errors.DB{})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc db error when creating engine\nGot %v\n Expected %v", resp, &car)
+	}
+}
+
+func TestService_CreateVerificationError(t *testing.T) {
+	s, mockCar, mockEngine := initializeTest(t)
+
+	mockEngine.EXPECT().Create(gomock.Any()).Return(nil)
+	mockCar.EXPECT().Create(gomock.Any()).Return(nil)
+	mockCar.EXPECT().GetByID(gomock.Any()).Return(car, errors.DB{})
+
+	resp, err := s.Create(&car)
+
+	if !reflect.DeepEqual(err, errors.DB{}) {
+		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", err, errors.DB{})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", resp, &car)
+	}
+}
+
+func TestService_CreateCarDBError(t *testing.T) {
+	s, mockCar, mockEngine := initializeTest(t)
+
+	mockEngine.EXPECT().Create(gomock.Any()).Return(nil)
+	mockCar.EXPECT().Create(gomock.Any()).Return(errors.DB{})
+
+	resp, err := s.Create(&car)
+
+	if !reflect.DeepEqual(err, errors.DB{}) {
+		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", err, errors.DB{})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", resp, &car)
+	}
+}
+
+func TestService_GetAllWithEngine(t *testing.T) {
+	cars := []models.Car{
 		{
-			ID:              uuid.Nil,
 			Model:           "X",
 			ManufactureYear: 2020,
 			Brand:           "BMW",
 			FuelType:        types.Petrol,
-			Engine: models.Engine{
-				ID:           uuid.Nil,
-				Displacement: 100,
-				NCylinder:    2,
-				Range:        0,
-			},
+			Engine:          models.Engine{Displacement: 100, NCylinder: 2},
 		},
 	}
 
-	carWithoutEngine := []models.Car{
+	s, mockCar, mockEngine := initializeTest(t)
+
+	mockCar.EXPECT().GetAll(gomock.Any()).Return(cars, nil)
+	mockEngine.EXPECT().GetByID(gomock.Any()).Return(engine, nil)
+
+	resp, err := s.GetAll(filters.Car{Brand: "BMW", Engine: true})
+
+	if err != nil {
+		t.Errorf("\n[TEST] Failed \nDesc received all cars\nGot %v\n Expected %v", err, nil)
+	}
+
+	if !reflect.DeepEqual(cars, resp) {
+		t.Errorf("\n[TEST] Failed \nDesc received all cars\nGot %v\n Expected %v", resp, nil)
+	}
+}
+
+func TestService_GetAllWithEngineDBError(t *testing.T) {
+	cars := []models.Car{
+		{
+			Model:           "X",
+			ManufactureYear: 2020,
+			Brand:           "BMW",
+			FuelType:        types.Petrol,
+			Engine:          models.Engine{Displacement: 100, NCylinder: 2},
+		},
+	}
+
+	s, mockCar, mockEngine := initializeTest(t)
+
+	mockCar.EXPECT().GetAll(gomock.Any()).Return(cars, nil)
+	mockEngine.EXPECT().GetByID(gomock.Any()).Return(engine, errors.DB{})
+
+	resp, err := s.GetAll(filters.Car{Brand: "BMW", Engine: true})
+
+	if !reflect.DeepEqual(err, errors.DB{}) {
+		t.Errorf("\n[TEST] Failed \nDesc received all cars\nGot %v\n Expected %v", err, nil)
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc received all cars\nGot %v\n Expected %v", resp, nil)
+	}
+}
+
+func TestService_GetAllWithoutEngine(t *testing.T) {
+	cars := []models.Car{
 		{
 			ID:              uuid.Nil,
 			Model:           "X",
@@ -107,29 +224,59 @@ func TestService_GetAll(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc       string
-		mockFilter filters.Car
-		resp       []models.Car
-		err        error
+		desc   string
+		filter filters.Car
+		resp   []models.Car
+		err    error
 	}{
-		{"received all cars", filters.Car{Brand: "BMW", Engine: true}, car, nil},
-		{"received all cars without enginge", filters.Car{Brand: "BMW", Engine: false}, carWithoutEngine, nil},
+		{"received all cars", filters.Car{Brand: "BMW"}, cars, nil},
+		{"received all cars", filters.Car{Brand: ""}, cars, nil},
 	}
 
 	for i, tc := range cases {
 		s, mockCar, _ := initializeTest(t)
 
-		mockCar.EXPECT().GetAll(tc.mockFilter).Return(tc.resp)
+		mockCar.EXPECT().GetAll(gomock.Any()).Return(cars, nil)
 
-		resp, err := s.GetAll(tc.mockFilter)
+		resp, err := s.GetAll(tc.filter)
 
-		if err != tc.err {
-			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
+		if err != nil {
+			t.Errorf("\n[TEST %d] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
 
-		if reflect.DeepEqual(tc.resp, resp) {
-			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, resp, tc.resp)
+		if !reflect.DeepEqual(cars, resp) {
+			t.Errorf("\n[TEST %d] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, resp, tc.resp)
 		}
+	}
+}
+
+func TestService_GetAllWithoutEngineDBError(t *testing.T) {
+	s, mockCar, _ := initializeTest(t)
+
+	mockCar.EXPECT().GetAll(gomock.Any()).Return(nil, errors.DB{})
+
+	resp, err := s.GetAll(filters.Car{Brand: "BMW"})
+
+	if !reflect.DeepEqual(err, errors.DB{}) {
+		t.Errorf("\n[TEST] Failed \nDesc error in getting cars\nGot %v\n Expected %v", err, errors.DB{})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc error in getting cars\nGot %v\n Expected %v", resp, nil)
+	}
+}
+
+func TestService_GetAllInvalidBrand(t *testing.T) {
+	s, _, _ := initializeTest(t)
+
+	resp, err := s.GetAll(filters.Car{Brand: "Aryan"})
+
+	if !reflect.DeepEqual(err, errors.InvalidParam{}) {
+		t.Errorf("\n[TEST] Failed \nDesc received all cars\nGot %v\n Expected %v", err, errors.InvalidParam{})
+	}
+
+	if resp != nil {
+		t.Errorf("\n[TEST] Failed \nDesc received all cars\nGot %v\n Expected %v", resp, nil)
 	}
 }
 
@@ -247,16 +394,21 @@ func TestService_UpdateInvalidEngine(t *testing.T) {
 }
 
 func TestService_UpdateInvalidParam(t *testing.T) {
+	car := models.Car{
+		Model:           "X",
+		ManufactureYear: 2020,
+		Brand:           "Aryan",
+		Engine:          engine,
+	}
+
 	s, _, mockEngine := initializeTest(t)
 
 	mockEngine.EXPECT().Update(&engine).Return(nil)
 
-	car.Brand = "Aryan"
-
 	resp, err := s.Update(&car)
 
-	if !reflect.DeepEqual(err, errors.InvalidParam{}) {
-		t.Errorf("\n[TEST] Failed \nDesc invalid param\nGot %v\n Expected %v", err, errors.InvalidParam{})
+	if !reflect.DeepEqual(err, errors.InvalidParam{Param: []string{"brand"}}) {
+		t.Errorf("\n[TEST] Failed \nDesc invalid param\nGot %v\n Expected %v", err, errors.InvalidParam{Param: []string{"brand"}})
 	}
 
 	if resp != nil {
@@ -357,7 +509,7 @@ func Test_CheckCar(t *testing.T) {
 	}
 
 	for i, tc := range cases {
-		err := checkCar(tc.input)
+		err := checkCar(&tc.input)
 
 		if reflect.DeepEqual(err, tc.err) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
@@ -369,6 +521,7 @@ func Test_checkEngine(t *testing.T) {
 	invalidEngine1 := models.Engine{Displacement: 10, NCylinder: 10, Range: 10}
 	invalidEngine2 := models.Engine{Displacement: 0, NCylinder: 0, Range: 0}
 	invalidEngine3 := models.Engine{Displacement: -1, NCylinder: -1, Range: -1}
+	invalidEngine4 := models.Engine{Displacement: 0, NCylinder: 0, Range: -1}
 
 	validEngine1 := models.Engine{Displacement: 10, NCylinder: 20}
 	validEngine2 := models.Engine{Displacement: 0, NCylinder: 0, Range: 10}
@@ -378,9 +531,10 @@ func Test_checkEngine(t *testing.T) {
 		input models.Engine
 		err   error
 	}{
-		{"all value more than 0", invalidEngine1, errors.InvalidParam{}},
-		{"all value equal to 0", invalidEngine2, errors.InvalidParam{}},
-		{"all value less than 0", invalidEngine3, errors.InvalidParam{}},
+		{"all value more than 0", invalidEngine1, errors.InvalidParam{Param: []string{"displacement", "noOfCylinder", "range"}}},
+		{"all value equal to 0", invalidEngine2, errors.InvalidParam{Param: []string{"displacement", "noOfCylinder", "range"}}},
+		{"all value less than 0", invalidEngine3, errors.InvalidParam{Param: []string{"displacement"}}},
+		{"all value less than 0", invalidEngine4, errors.InvalidParam{Param: []string{"range"}}},
 		{"valid engine for non electric", validEngine1, nil},
 		{"valid engine for electric", validEngine2, nil},
 	}
