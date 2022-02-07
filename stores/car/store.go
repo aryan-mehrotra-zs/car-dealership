@@ -90,7 +90,8 @@ func (s store) GetByID(id uuid.UUID) (models.Car, error) {
 
 // Update modifies car of the given id
 func (s store) Update(car *models.Car) error {
-	_, err := s.db.Exec(updateCar, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID)
+	_, err := s.db.Exec(updateCar, car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID, car.ID)
+	log.Println(err)
 	if err != nil {
 		return errors.DB{Err: err}
 	}
