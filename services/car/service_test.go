@@ -91,7 +91,7 @@ func TestService_CreateInvalidEngine(t *testing.T) {
 		ManufactureYear: 2021,
 		Brand:           "BMW",
 		FuelType:        types.Petrol,
-		Engine:          models.Engine{Displacement: 0, Range: 00, NCylinder: -11},
+		Engine:          models.Engine{NCylinder: -11},
 	}
 
 	s, _, _ := initializeTest(t)
