@@ -41,64 +41,41 @@ func initializeTest(t *testing.T, method string, body io.Reader, pParam map[stri
 	return h, mockService, r, w
 }
 
-func getResponseBody(resp *http.Response) ([]byte, error) {
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+// todo use NewRandom instead of MustParse
+// todo remove goerror
+// todo error should not be supressed
 
-	if err := resp.Body.Close(); err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
-func getOutput(t *testing.T, respBody []byte) *models.Car {
-	var output *models.Car
-
-	if len(respBody) != 0 {
-		output = &models.Car{}
-		if err := json.Unmarshal(respBody, output); err != nil {
-			t.Error(err)
-		}
-	}
-
-	return output
+var car = models.Car{
+	ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
+	Model:           "x",
+	ManufactureYear: 2020,
+	Brand:           "BMW",
+	FuelType:        types.Petrol,
+	Engine:          models.Engine{Displacement: 100, NCylinder: 2},
 }
 
 func TestHandler_Create(t *testing.T) {
 	var (
 		body = []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
 		"engine":{"displacement":100,"noOfCylinder":2,"range":0}}`)
-
-		car = models.Car{
-			ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-			Model:           "x",
-			ManufactureYear: 2020,
-			Brand:           "BMW",
-			FuelType:        types.Petrol,
-			Engine:          models.Engine{Displacement: 100, NCylinder: 2},
-		}
 	)
 
 	cases := []struct {
 		desc       string
-		body       io.Reader
-		expOutput  *models.Car
-		expErr     error
+		mockOutput *models.Car
+		mockErr    error
 		resp       *models.Car
 		statusCode int
 	}{
-		{"success case", bytes.NewReader(body), &car, nil, &car, http.StatusCreated},
-		{"entity already exists", bytes.NewReader(body), nil, errors.EntityAlreadyExists{}, nil, http.StatusOK},
-		{"internal server error", bytes.NewReader(body), nil, errors.DB{}, nil, http.StatusInternalServerError},
+		{"success case", &car, nil, &car, http.StatusCreated},
+		{"entity already exists", nil, errors.EntityAlreadyExists{}, nil, http.StatusOK},
+		{"internal server error", nil, errors.DB{}, nil, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodPost, tc.body, nil, nil)
+		h, mockService, r, w := initializeTest(t, http.MethodPost, bytes.NewReader(body), nil, nil)
 
-		mockService.EXPECT().Create(&car).Return(tc.expOutput, tc.expErr)
+		mockService.EXPECT().Create(&car).Return(tc.mockOutput, tc.mockErr)
 
 		h.Create(w, r)
 
@@ -106,14 +83,16 @@ func TestHandler_Create(t *testing.T) {
 
 		body, err := getResponseBody(resp)
 		if err != nil {
-			t.Errorf("error in reading body")
+			t.Errorf("error in reading body : %v", err)
 		}
+
+		output := getOutput(t, body)
 
 		if resp.StatusCode != tc.statusCode {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if reflect.DeepEqual(body, resp.Body) {
+		if !reflect.DeepEqual(output, tc.resp) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), tc.resp)
 		}
 	}
@@ -130,61 +109,67 @@ func Test_CreateInvalidBody(t *testing.T) {
 		t.Errorf("error in reading body")
 	}
 
+	output := getOutput(t, body)
+
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
 	}
 
-	if reflect.DeepEqual(body, resp.Body) {
-		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", string(body), resp.Body)
+	if output != nil {
+		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", output, resp.Body)
 	}
 }
 
 func TestHandler_GetAll(t *testing.T) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		t.Errorf("unable to create uuid : %v", err)
+	}
+
 	withEngine := []models.Car{
 		{
-			ID:              uuid.Nil,
+			ID:              id,
 			Model:           "X",
 			ManufactureYear: 2020,
 			Brand:           "BMW",
 			FuelType:        types.Petrol,
 			Engine: models.Engine{
-				ID:           uuid.Nil,
+				ID:           id,
 				Displacement: 100,
 				NCylinder:    2,
-				Range:        0,
 			},
 		},
 	}
 
 	withoutEngine := []models.Car{
 		{
-			ID:              uuid.Nil,
+			ID:              id,
 			Model:           "X",
 			ManufactureYear: 2020,
 			Brand:           "BMW",
 			FuelType:        types.Petrol,
-			Engine:          models.Engine{},
 		},
 	}
 
 	cases := []struct {
 		desc       string
 		filter     filters.Car
-		expOutput  []models.Car
-		expErr     error
+		mockOutput []models.Car
+		mockErr    error
 		statusCode int
 	}{
 		{"get all cars  with engine", filters.Car{Brand: "BMW", Engine: true}, withEngine, nil, http.StatusOK},
 		{"get all cars without engine", filters.Car{Brand: "BMW", Engine: false}, withoutEngine, nil, http.StatusOK},
 		{"invalid parameter", filters.Car{Brand: "xyz"}, nil, errors.InvalidParam{Param: []string{"brand"}}, http.StatusBadRequest},
-		{"internal server error", filters.Car{Brand: "BMW", Engine: false}, nil, errors.DB{Err: goError.New("connection failed")}, http.StatusInternalServerError},
+		{"internal server error", filters.Car{Brand: "BMW"}, nil, errors.DB{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodGet, http.NoBody, nil,
-			map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}})
+		params := map[string][]string{"brand": {tc.filter.Brand}, "engine": {strconv.FormatBool(tc.filter.Engine)}}
 
-		mockService.EXPECT().GetAll(tc.filter).Return(tc.expOutput, tc.expErr)
+		h, mockService, r, w := initializeTest(t, http.MethodGet, http.NoBody, nil, params)
+
+		mockService.EXPECT().GetAll(tc.filter).Return(tc.mockOutput, tc.mockErr)
 
 		h.GetAll(w, r)
 
@@ -199,43 +184,35 @@ func TestHandler_GetAll(t *testing.T) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if reflect.DeepEqual(body, tc.expOutput) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), (tc.expOutput))
+		if !reflect.DeepEqual(body, tc.mockOutput) {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), (tc.mockOutput))
 		}
 	}
 }
 
 func TestHandler_GetByID(t *testing.T) {
-	car := models.Car{
-		ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-		Model:           "X",
-		ManufactureYear: 2020,
-		Brand:           "BMW",
-		FuelType:        types.Petrol,
-		Engine: models.Engine{
-			Displacement: 100,
-			NCylinder:    2,
-		},
+	id, err := uuid.NewRandom()
+	if err != nil {
+		t.Errorf("unable to create uuid : %v", err)
 	}
+
+	car.ID = id
 
 	cases := []struct {
 		desc       string
-		id         uuid.UUID
-		expOutput  *models.Car
-		expErr     error
+		mockOutput *models.Car
+		mockErr    error
 		statusCode int
 	}{
-		{"request successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), &car, nil,
-			http.StatusOK},
-		{"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), nil,
-			errors.EntityNotFound{}, http.StatusNotFound},
-		{"internal server error", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), nil, errors.DB{Err: goError.New("connectivity error")}, http.StatusInternalServerError},
+		{"request successful", &car, nil, http.StatusOK},
+		{"entity does not exist", nil, errors.EntityNotFound{}, http.StatusNotFound},
+		{"internal server error", nil, errors.DB{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodGet, http.NoBody, map[string]string{"id": tc.id.URN()}, nil)
+		h, mockService, r, w := initializeTest(t, http.MethodGet, http.NoBody, map[string]string{"id": id.URN()}, nil)
 
-		mockService.EXPECT().GetByID(tc.id).Return(tc.expOutput, tc.expErr)
+		mockService.EXPECT().GetByID(id).Return(tc.mockOutput, tc.mockErr)
 
 		h.GetByID(w, r)
 
@@ -250,28 +227,30 @@ func TestHandler_GetByID(t *testing.T) {
 			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, resp.StatusCode, tc.statusCode)
 		}
 
-		if reflect.DeepEqual(body, tc.expOutput) {
-			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), tc.expOutput)
+		if reflect.DeepEqual(body, tc.mockOutput) {
+			t.Errorf("\n[TEST %d] Failed. Desc : %v\nGot %v\nExpected %v", i, tc.desc, string(body), tc.mockOutput)
 		}
 	}
 }
 
 func Test_GetByIDInvalidID(t *testing.T) {
-	h, _, r, w := initializeTest(t, http.MethodGet, nil, nil, nil)
+	h, _, r, w := initializeTest(t, http.MethodGet, http.NoBody, nil, nil)
 	h.GetByID(w, r)
 
 	resp := w.Result()
 
 	body, err := getResponseBody(resp)
 	if err != nil {
-		t.Errorf("error in reading body")
+		t.Errorf("error in reading body : %v", err)
 	}
+
+	output := getOutput(t, body)
 
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
 	}
 
-	if reflect.DeepEqual(body, resp.Body) {
+	if output != nil {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", string(body), resp.Body)
 	}
 }
@@ -294,20 +273,21 @@ func TestHandler_Update(t *testing.T) {
 
 	cases := []struct {
 		desc       string
-		expErr     error
+		mockErr    error
 		resp       *models.Car
 		statusCode int
 	}{
 		{"entity updated successfully", nil, &car, http.StatusOK},
 		{"entity not found", errors.EntityNotFound{}, nil, http.StatusNotFound},
-		{"internal server error", errors.DB{Err: goError.New("connectivity error")}, nil, http.StatusInternalServerError},
+		{"internal server error", errors.DB{}, nil, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodPut, bytes.NewReader(body),
-			map[string]string{"id": "8f443772-132b-4ae5-9f8f-9960649b3fb4"}, nil)
+		param := map[string]string{"id": "8f443772-132b-4ae5-9f8f-9960649b3fb4"}
 
-		mockService.EXPECT().Update(&car).Return(tc.resp, tc.expErr)
+		h, mockService, r, w := initializeTest(t, http.MethodPut, bytes.NewReader(body), param, nil)
+
+		mockService.EXPECT().Update(&car).Return(tc.resp, tc.mockErr)
 
 		h.Update(w, r)
 
@@ -331,7 +311,8 @@ func TestHandler_Update(t *testing.T) {
 }
 
 func Test_UpdateInvalidID(t *testing.T) {
-	h, _, r, w := initializeTest(t, http.MethodPut, nil, map[string]string{"id": "8f443772-132b-4ae5-9f8f-9960649b3fb4"}, nil)
+	param := map[string]string{"id": "8f443772-132b-4ae5-9f8f-9960649b3fb4"}
+	h, _, r, w := initializeTest(t, http.MethodPut, nil, param, nil)
 	h.Update(w, r)
 
 	resp := w.Result()
@@ -341,11 +322,13 @@ func Test_UpdateInvalidID(t *testing.T) {
 		t.Errorf("error in reading body")
 	}
 
+	output := getOutput(t, body)
+
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
 	}
 
-	if reflect.DeepEqual(body, resp.Body) {
+	if output != nil {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", string(body), resp.Body)
 	}
 }
@@ -361,31 +344,37 @@ func Test_UpdateInvalidBody(t *testing.T) {
 		t.Errorf("error in reading body")
 	}
 
+	output := getOutput(t, body)
+
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
 	}
 
-	if reflect.DeepEqual(body, resp.Body) {
+	if output != nil {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", string(body), resp.Body)
 	}
 }
 
 func TestHandler_Delete(t *testing.T) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		t.Errorf("unable to create uuid : %v", err)
+	}
+
 	cases := []struct {
 		desc       string
-		id         uuid.UUID
 		mockErr    error
 		statusCode int
 	}{
-		{"delete successful", uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"), nil, http.StatusNoContent},
-		{"entity does not exist", uuid.MustParse("123e4567-e89b-12d3-a456-426614174001"), errors.EntityNotFound{}, http.StatusNotFound},
-		{"internal server error", uuid.Nil, errors.DB{Err: goError.New("connection failed")}, http.StatusInternalServerError},
+		{"delete successful", nil, http.StatusNoContent},
+		{"entity does not exist", errors.EntityNotFound{}, http.StatusNotFound},
+		{"internal server error", errors.DB{}, http.StatusInternalServerError},
 	}
 
 	for i, tc := range cases {
-		h, mockService, r, w := initializeTest(t, http.MethodDelete, http.NoBody, map[string]string{"id": tc.id.URN()}, nil)
+		h, mockService, r, w := initializeTest(t, http.MethodDelete, http.NoBody, map[string]string{"id": id.URN()}, nil)
 
-		mockService.EXPECT().Delete(tc.id).Return(tc.mockErr)
+		mockService.EXPECT().Delete(id).Return(tc.mockErr)
 
 		h.Delete(w, r)
 
@@ -402,7 +391,7 @@ func TestHandler_Delete(t *testing.T) {
 }
 
 func Test_DeleteInvalidID(t *testing.T) {
-	h, _, r, w := initializeTest(t, http.MethodDelete, nil, nil, nil)
+	h, _, r, w := initializeTest(t, http.MethodDelete, http.NoBody, nil, nil)
 	h.Delete(w, r)
 
 	resp := w.Result()
@@ -412,28 +401,23 @@ func Test_DeleteInvalidID(t *testing.T) {
 		t.Errorf("error in reading body")
 	}
 
+	output := getOutput(t, body)
+
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", resp.StatusCode, http.StatusBadRequest)
 	}
 
-	if reflect.DeepEqual(body, resp.Body) {
+	if output != nil {
 		t.Errorf("\n[TEST] Failed. Desc : invalid body\nGot %v\nExpected %v", string(body), resp.Body)
 	}
 }
 
 func Test_getCar(t *testing.T) {
 	var (
-		body = []byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
-		"engine":{"displacement":100,"noOfCylinder":2,"range":0}}`)
+		body = bytes.NewReader([]byte(`{"id":"8f443772-132b-4ae5-9f8f-9960649b3fb4","model":"x","yearOfManufacture":2020,"brand":"BMW","fuelType":"petrol",
+		"engine":{"displacement":100,"noOfCylinder":2,"range":0}}`))
 
-		car = models.Car{
-			ID:              uuid.MustParse("8f443772-132b-4ae5-9f8f-9960649b3fb4"),
-			Model:           "x",
-			ManufactureYear: 2020,
-			Brand:           "BMW",
-			FuelType:        types.Petrol,
-			Engine:          models.Engine{Displacement: 100, NCylinder: 2},
-		}
+		invalidBody = bytes.NewReader([]byte("invalid body"))
 	)
 
 	cases := []struct {
@@ -442,9 +426,9 @@ func Test_getCar(t *testing.T) {
 		output *models.Car
 		err    error
 	}{
-		{"success", bytes.NewReader(body), &car, nil},
+		{"success", body, &car, nil},
 		{"bind error", mockReader{}, nil, errors.InvalidParam{Param: []string{"body"}}},
-		{"unmarshal error", bytes.NewReader([]byte("invalid body")), nil, errors.InvalidParam{Param: []string{"body"}}},
+		{"unmarshal error", invalidBody, nil, errors.InvalidParam{Param: []string{"body"}}},
 	}
 
 	for i, tc := range cases {
@@ -527,8 +511,7 @@ func (m mockReader) Read(p []byte) (n int, err error) {
 	return 0, goError.New("bind error")
 }
 
-type mockResponseWriter struct {
-}
+type mockResponseWriter struct{}
 
 func (m mockResponseWriter) Header() http.Header {
 	header := make(map[string][]string)
@@ -542,4 +525,30 @@ func (m mockResponseWriter) Write([]byte) (int, error) {
 
 func (m mockResponseWriter) WriteHeader(statusCode int) {
 
+}
+
+func getResponseBody(resp *http.Response) ([]byte, error) {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := resp.Body.Close(); err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+func getOutput(t *testing.T, respBody []byte) *models.Car {
+	var output *models.Car
+
+	if len(respBody) != 0 {
+		output = &models.Car{}
+		if err := json.Unmarshal(respBody, output); err != nil {
+			t.Error(err)
+		}
+	}
+
+	return output
 }
