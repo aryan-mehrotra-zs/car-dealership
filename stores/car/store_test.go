@@ -3,6 +3,7 @@ package car
 import (
 	"database/sql"
 	goError "errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -120,13 +121,13 @@ func TestStore_GetAll(t *testing.T) {
 	}{
 		{"success case", filters.Car{Brand: "BMW"}, cars, nil},
 		{"query error", filters.Car{}, nil, errors.DB{Err: queryError}},
-		{"scan error", filters.Car{}, nil, errors.DB{}},
+		{"scan error", filters.Car{}, nil, errors.DB{Err: fmt.Errorf("sql: expected %d destination arguments in Scan, not %d", 7, 6)}},
 	}
 
 	for i, tc := range cases {
 		car, err := s.GetAll(tc.filter)
 
-		if err != tc.err {
+		if !reflect.DeepEqual(err, tc.err) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
 		}
 
