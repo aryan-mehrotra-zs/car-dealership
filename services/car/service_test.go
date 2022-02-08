@@ -484,7 +484,7 @@ func TestService_DeleteInvalidEngine(t *testing.T) {
 	}
 }
 
-func Test_CheckCar(t *testing.T) {
+func Test_checkCar(t *testing.T) {
 	invalidEngine := models.Car{Model: "A", ManufactureYear: 2000, Brand: "tesla", FuelType: 3,
 		Engine: models.Engine{Displacement: 200, NCylinder: 10, Range: 10}}
 	invalidEngine2 := models.Car{Model: "A", ManufactureYear: 2000, Brand: "tesla", FuelType: 3,
