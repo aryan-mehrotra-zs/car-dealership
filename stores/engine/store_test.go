@@ -47,21 +47,16 @@ func TestStore_Create(t *testing.T) {
 	mock.ExpectExec(insertEngine).WithArgs(engine.ID, engine.Displacement, engine.NCylinder, engine.Range).WillReturnError(queryError)
 
 	cases := []struct {
-		desc   string
-		input  models.Engine
-		output uuid.UUID
-		err    error
+		desc  string
+		input models.Engine
+		err   error
 	}{
-		{"success case", engine, id, nil},
-		{"failure case", engine, uuid.Nil, errors.DB{Err: queryError}},
+		{"success case", engine, nil},
+		{"failure case", engine, errors.DB{Err: queryError}},
 	}
 
 	for i, tc := range cases {
-		id, err := s.Create(&tc.input)
-
-		if id != tc.output {
-			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, id, tc.output)
-		}
+		err := s.Create(&tc.input)
 
 		if err != tc.err {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
