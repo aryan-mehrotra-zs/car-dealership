@@ -16,15 +16,22 @@ const (
 	Electric
 )
 
+const (
+	diesel   = "diesel"
+	petrol   = "petrol"
+	electric = "electric"
+)
+
 func (f Fuel) MarshalJSON() ([]byte, error) {
 	var s string
+
 	switch f {
 	case Petrol:
-		s = "petrol"
+		s = petrol
 	case Diesel:
-		s = "diesel"
+		s = diesel
 	case Electric:
-		s = "electric"
+		s = electric
 	default:
 		return nil, errors.InvalidParam{Param: []string{"fuelType"}}
 	}
@@ -39,11 +46,11 @@ func (f *Fuel) UnmarshalJSON(b []byte) error {
 	}
 
 	switch strings.ToLower(s) {
-	case "petrol":
+	case petrol:
 		*f = Petrol
-	case "diesel":
+	case diesel:
 		*f = Diesel
-	case "electric":
+	case electric:
 		*f = Electric
 	default:
 		return errors.InvalidParam{Param: []string{"fuelType"}}
@@ -55,11 +62,11 @@ func (f *Fuel) UnmarshalJSON(b []byte) error {
 func (f Fuel) Value() (driver.Value, error) {
 	switch f {
 	case Diesel:
-		return "diesel", nil
+		return diesel, nil
 	case Petrol:
-		return "petrol", nil
+		return petrol, nil
 	case Electric:
-		return "electric", nil
+		return electric, nil
 	}
 
 	return nil, errors.InvalidParam{Param: []string{"fuelType"}}
@@ -72,11 +79,11 @@ func (f *Fuel) Scan(value interface{}) error {
 	}
 
 	switch string(fuel) {
-	case "diesel":
+	case diesel:
 		*f = Diesel
-	case "petrol":
+	case petrol:
 		*f = Petrol
-	case "electric":
+	case electric:
 		*f = Electric
 	default:
 		return errors.InvalidParam{Param: []string{"fuelType"}}
