@@ -34,7 +34,7 @@ Create Docker Image
 docker run --name car_dealership -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=car_dealership -p 3306:3306 -d mysql:latest
 ```
 
-SQL Commands To Create Table
+MySQL Commands To Create Table
 ```
 CREATE TABLE engines(
 id varchar(36) NOT NULL,
