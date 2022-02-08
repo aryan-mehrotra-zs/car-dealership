@@ -15,14 +15,27 @@ stores
 no error
 ```
 
+### Server Setup
+
+Start Database
+```
+docker exec -it customer-api mysql -u root -ppassword organisation
+```
+Begin Server 
+```
+go run main.go
+```
+
+
 ### DATABASE SETUP
 
-SQL COMMANDS
-
-
+Create Docker Image 
 ```
-CREATE DATABASE car_dealership
+docker run --name car_dealership -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=car_dealership -p 3306:3306 -d mysql:latest
+```
 
+SQL Commands To Create Table
+```
 CREATE TABLE engines(
 id varchar(36) NOT NULL,
 displacement INT,
