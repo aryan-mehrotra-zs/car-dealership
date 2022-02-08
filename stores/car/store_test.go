@@ -103,10 +103,10 @@ func TestStore_GetAll(t *testing.T) {
 	queryError := goError.New("query error")
 
 	row1 := sqlmock.NewRows([]string{"id", "model", "year_of_manufacture", "brand", "fuel_type", "engine_id"}).
-		AddRow(id.String(), "X", 2020, "BMW", 1, id.String())
+		AddRow(id.String(), "X", 2020, "BMW", []byte("petrol"), id.String())
 
 	row2 := sqlmock.NewRows([]string{"id", "model", "year_of_manufacture", "brand", "fuel_type", "engine_id", "scan_error"}).
-		AddRow(id.String(), "X", 2020, "BMW", 1, id.String(), "scan_error")
+		AddRow(id.String(), "X", 2020, "BMW", []byte("petrol"), id.String(), "scan_error")
 
 	mock.ExpectQuery(getCarsWithBrand).WithArgs("BMW").WillReturnRows(row1)
 	mock.ExpectQuery(getCars).WillReturnError(queryError)
@@ -120,7 +120,7 @@ func TestStore_GetAll(t *testing.T) {
 	}{
 		{"success case", filters.Car{Brand: "BMW"}, cars, nil},
 		{"query error", filters.Car{}, nil, errors.DB{Err: queryError}},
-		{"scan error", filters.Car{}, cars, errors.DB{}},
+		{"scan error", filters.Car{}, nil, errors.DB{}},
 	}
 
 	for i, tc := range cases {
@@ -156,7 +156,7 @@ func TestStore_GetByID(t *testing.T) {
 	queryErr := goError.New("query error")
 
 	rows := sqlmock.NewRows([]string{"id", "model", "year_of_manufacture", "brand", "fuel_type", "engine_id"}).
-		AddRow(id.String(), "X", 2020, "BMW", 1, id.String())
+		AddRow(id.String(), "X", 2020, "BMW", []byte("diesel"), id.String())
 
 	mock.ExpectQuery(getCar).WithArgs(id).WillReturnRows(rows)
 	mock.ExpectQuery(getCar).WithArgs(uuid.Nil).WillReturnError(queryErr)
@@ -203,9 +203,9 @@ func TestStore_Update(t *testing.T) {
 		Engine:          models.Engine{ID: id},
 	}
 
-	mock.ExpectExec(updateCar).WithArgs(car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID).
+	mock.ExpectExec(updateCar).WithArgs(car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID, car.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec(updateCar).WithArgs(car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID).
+	mock.ExpectExec(updateCar).WithArgs(car.Model, car.ManufactureYear, car.Brand, car.FuelType, car.ID, car.ID).
 		WillReturnError(updateFailed)
 
 	cases := []struct {
