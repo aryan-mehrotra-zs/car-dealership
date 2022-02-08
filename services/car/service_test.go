@@ -58,9 +58,6 @@ func TestService_Create(t *testing.T) {
 
 	resp, err := s.Create(&car)
 
-	resp.ID = id
-	resp.Engine.ID = id
-
 	if err != nil {
 		t.Errorf("\n[TEST] Failed \nDesc create successful\nGot %v\n Expected %v", err, nil)
 	}
@@ -85,7 +82,7 @@ func TestService_CreateInvalidCar(t *testing.T) {
 }
 
 func TestService_CreateInvalidEngine(t *testing.T) {
-	car := models.Car{
+	car = models.Car{
 		ID:              uuid.Nil,
 		Model:           "X",
 		ManufactureYear: 2021,
@@ -99,7 +96,8 @@ func TestService_CreateInvalidEngine(t *testing.T) {
 	resp, err := s.Create(&car)
 
 	if !reflect.DeepEqual(err, errors.InvalidParam{Param: []string{"noOfCylinder"}}) {
-		t.Errorf("\n[TEST] Failed \nDesc invalid engine parameter\nGot %v\n Expected %v", err, errors.InvalidParam{Param: []string{"noOfCylinder"}})
+		t.Errorf("\n[TEST] Failed \nDesc invalid engine parameter\nGot %v\n Expected %v", err,
+			errors.InvalidParam{Param: []string{"noOfCylinder"}})
 	}
 
 	if resp != nil {
@@ -394,7 +392,7 @@ func TestService_UpdateInvalidEngine(t *testing.T) {
 }
 
 func TestService_UpdateInvalidParam(t *testing.T) {
-	car := models.Car{
+	car = models.Car{
 		Model:           "X",
 		ManufactureYear: 2020,
 		Brand:           "Aryan",
