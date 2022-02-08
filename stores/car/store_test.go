@@ -1,10 +1,13 @@
 package car
 
 import (
+	"bytes"
 	"database/sql"
 	goError "errors"
 	"fmt"
+	"log"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -133,6 +136,53 @@ func TestStore_GetAll(t *testing.T) {
 
 		if !reflect.DeepEqual(car, tc.output) {
 			t.Errorf("\n[TEST %v] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
+		}
+	}
+}
+
+func TestStore_GetAllCloseErr(t *testing.T) {
+	db, mock, s := initializeTests(t)
+	defer db.Close()
+
+	id, err := uuid.NewRandom()
+	if err != nil {
+		t.Errorf("cannot generate new id : %v", err)
+	}
+
+	closeError := goError.New("close error")
+	rowError := goError.New("row error")
+
+	closeRow := sqlmock.NewRows([]string{"id", "model", "year_of_manufacture", "brand", "fuel_type", "engine_id"}).
+		AddRow(id.String(), "X", 2020, "BMW", []byte("petro"), id.String()).CloseError(errors.DB{Err: closeError})
+
+	errRow := sqlmock.NewRows([]string{"id", "model", "year_of_manufacture", "brand", "fuel_type", "engine_id"}).
+		AddRow(id.String(), "X", 2020, "BMW", []byte("petro"), id.String()).RowError(0, errors.DB{Err: rowError})
+
+	mock.ExpectQuery(getCars).WillReturnRows(closeRow)
+	mock.ExpectQuery(getCars).WillReturnRows(errRow)
+
+	cases := []struct {
+		desc string
+		row  *sqlmock.Rows
+		err  string
+	}{
+		{"row close error", closeRow, "close error"},
+		{"row error", errRow, "row error"},
+	}
+
+	for i, tc := range cases {
+		var b bytes.Buffer
+
+		log.SetOutput(&b)
+
+		car, err := s.GetAll(filters.Car{})
+
+		if !strings.Contains(b.String(), tc.err) {
+			t.Errorf("\n[TEST %d] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, err, tc.err)
+		}
+
+		if len(car) != 0 {
+			t.Errorf("\n[TEST %d] Failed \nDesc %v\nGot %v\n Expected %v", i, tc.desc, len(car), 0)
 		}
 	}
 }
