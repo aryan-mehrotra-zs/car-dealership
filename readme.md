@@ -6,7 +6,7 @@ It allows storing of data of different cars with their engine specifications.
 handler : 100%
 service : 100%
 stores
-     --car     : 94.9%
+     --car     : 100%
      --engine  : 100%
 ```
 
