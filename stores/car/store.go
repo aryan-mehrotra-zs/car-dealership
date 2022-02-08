@@ -53,7 +53,7 @@ func (s store) GetAll(filter filters.Car) ([]models.Car, error) {
 		}
 	}()
 
-	defer func() (err error) {
+	defer func() {
 		err = rows.Close()
 		if err != nil {
 			log.Printf("error in closing rows : %v", err)
