@@ -10,7 +10,7 @@ stores
      --engine  : 100%
 ```
 
-#### linter-check 
+### linter-check 
 ```
 no error
 ```
@@ -27,7 +27,7 @@ go run main.go
 ```
 
 
-### DATABASE SETUP
+### Database Setup
 
 Create Docker Image 
 ```
