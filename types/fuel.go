@@ -86,7 +86,7 @@ func (f *Fuel) Scan(value interface{}) error {
 	case electric:
 		*f = Electric
 	default:
-		return errors.InvalidParam{Param: []string{"fuelType"}}
+		return errors.InvalidParam{Param: []string{"fuel_type"}}
 	}
 
 	return nil
