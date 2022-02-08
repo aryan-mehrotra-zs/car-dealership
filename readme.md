@@ -1,7 +1,7 @@
 # car-dealership
 It allows storing of data of different cars with their engine specifications. 
 
-# coverage
+# test-coverage
 ```
 handler : 100%
 service : 100%
@@ -10,8 +10,10 @@ stores
      --engine  : 100%
 ```
 
-#### linter-check `no error`
-
+#### linter-check 
+```
+no error
+```
 
 ### DATABASE SETUP
 
