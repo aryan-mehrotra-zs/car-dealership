@@ -32,5 +32,4 @@ func ConnectToSQL() (*sql.DB, error) {
 	log.Println("Connected")
 
 	return db, nil
-
 }

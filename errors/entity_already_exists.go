@@ -7,5 +7,5 @@ type EntityAlreadyExists struct {
 }
 
 func (e EntityAlreadyExists) Error() string {
-	return fmt.Sprintf("Entity  %v Already Exists", e.Entity)
+	return fmt.Sprintf("entity  %v already exists", e.Entity)
 }

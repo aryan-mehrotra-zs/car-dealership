@@ -1,8 +1,11 @@
 package errors
 
+import "fmt"
+
 type MissingParam struct {
+	Param string
 }
 
 func (e MissingParam) Error() string {
-	return "Missing Param"
+	return fmt.Sprintf("parameter %s is missing", e.Param)
 }

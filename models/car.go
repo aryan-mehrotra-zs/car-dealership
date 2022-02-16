@@ -7,10 +7,10 @@ import (
 )
 
 type Car struct {
-	ID                uuid.UUID  `json:"id"`
-	Model             string     `json:"model"`
-	YearOfManufacture int        `json:"yearOfManufacture"`
-	Brand             string     `json:"brand"`
-	FuelType          types.Fuel `json:"fuelType"`
-	Engine            Engine     `json:"engine"`
+	ID              uuid.UUID  `json:"id"`
+	Model           string     `json:"model"`
+	ManufactureYear int        `json:"yearOfManufacture"`
+	Brand           string     `json:"brand"`
+	FuelType        types.Fuel `json:"fuelType"`
+	Engine          Engine     `json:"engine"`
 }
